@@ -23,9 +23,8 @@ namespace FutarWP.Pages
     private bool _mapReset = false;
     private DispatcherTimer _vehicleUpdateTimer = new DispatcherTimer();
     private Dictionary<string, MapIcon> _vehicleIcons = new Dictionary<string, MapIcon>();
-    private string _selectedTripID = string.Empty;
-    private int _vehiclesAreUpdating = 0; // Atomic check
-    private System.Diagnostics.Stopwatch _vehicleUpdateStopwatch = new System.Diagnostics.Stopwatch();
+    private int _updateRunning = 0; // Atomic check
+    private System.Diagnostics.Stopwatch _updateStopwatch = new System.Diagnostics.Stopwatch();
 
     public MainPage()
     {
@@ -42,15 +41,16 @@ namespace FutarWP.Pages
       map.ZoomLevelChanged += Map_ZoomLevelChanged;
 
       // TODO: figure this out
-      string styleSheetJson = @"{""version"": ""1.*"",""elements"":{""selected"":{ ""borderVisible"":true, ""borderOutlineColor"":""#FFFF00FF"", ""borderWidthScale"": 4 }}}";
-      map.StyleSheet = MapStyleSheet.ParseFromJson(styleSheetJson);
+      //string styleSheetJson = @"{""version"": ""1.*"",""elements"":{""selected"":{ ""borderVisible"":true, ""borderOutlineColor"":""#FFFF00FF"", ""borderWidthScale"": 4 }}}";
+      //map.StyleSheet = MapStyleSheet.ParseFromJson(styleSheetJson);
     }
 
     public string TopPaneHeight => PaneVisible ? "0.5*" : "*";
     public string BottomPaneHeight => PaneVisible ? "0.5*" : "0";
     public bool PaneVisible { get; set; } = false;
+    public MapControl Map => map;
 
-    private void Map_MapElementClick(MapControl sender, MapElementClickEventArgs args)
+    private async void Map_MapElementClick(MapControl sender, MapElementClickEventArgs args)
     {
       var mapIcon = args.MapElements.FirstOrDefault() as MapIcon;
       if (mapIcon == null)
@@ -61,7 +61,8 @@ namespace FutarWP.Pages
       var vehicleKVP = _vehicleIcons.FirstOrDefault(kvp => kvp.Value == mapIcon);
       if (vehicleKVP.Key != null)
       {
-        _selectedTripID = vehicleKVP.Key;
+        tripInlay.TripID = vehicleKVP.Key;
+        tripInlay.MapElement = vehicleKVP.Value;
         map.Center = vehicleKVP.Value.Location;
 
         PaneVisible = true;
@@ -69,15 +70,15 @@ namespace FutarWP.Pages
         OnPropertyChanged(nameof(TopPaneHeight));
         OnPropertyChanged(nameof(BottomPaneHeight));
        
-        vehicleKVP.Value.MapStyleSheetEntry = "selected";
-        tripInlay.TripID = vehicleKVP.Key;
-        tripInlay.Refresh();
+        //vehicleKVP.Value.MapStyleSheetEntry = "selected";
+        await tripInlay.Refresh();
       }
     }
 
     public void ClosePane()
     {
-      _selectedTripID = string.Empty;
+      tripInlay.TripID = string.Empty;
+      tripInlay.MapElement = null;
       PaneVisible = false;
       OnPropertyChanged(nameof(PaneVisible));
       OnPropertyChanged(nameof(TopPaneHeight));
@@ -104,18 +105,25 @@ namespace FutarWP.Pages
       bool outsideZoomLevel = map.ZoomLevel < _vehicleMinZoomLevel;
 
       // 5s throttling
-      if (!outsideZoomLevel && _vehicleUpdateStopwatch.IsRunning && _vehicleUpdateStopwatch.ElapsedMilliseconds < 5000)
+      if (!outsideZoomLevel && _updateStopwatch.IsRunning && _updateStopwatch.ElapsedMilliseconds < 5000)
       {
         return;
       }
 
       // Ensure only one update runs at a time
-      if (System.Threading.Interlocked.CompareExchange(ref _vehiclesAreUpdating, 1, 0) != 0)
+      if (System.Threading.Interlocked.CompareExchange(ref _updateRunning, 1, 0) != 0)
       {
         return;
       }
 
-      _vehicleUpdateStopwatch.Restart();
+      if (PaneVisible)
+      {
+        await tripInlay.Refresh();
+        _updateRunning = 0;
+        return;
+      }
+
+      _updateStopwatch.Restart();
 
       if (outsideZoomLevel)
       {
@@ -125,16 +133,24 @@ namespace FutarWP.Pages
           map.MapElements.Remove(_vehicleIcons[id]);
           _vehicleIcons.Remove(id);
         }
-        _vehiclesAreUpdating = 0;
-        _vehicleUpdateStopwatch.Reset();
+        _updateStopwatch.Reset();
+        _updateRunning = 0;
         return;
       }
 
+      await RefreshVehicleIcons();
+
+      _updateRunning = 0;
+    }
+
+    private async Task RefreshVehicleIcons()
+    {
       Geopoint topLeft, bottomRight;
       map.GetLocationFromOffset(new Point(0, 0), out topLeft);
       map.GetLocationFromOffset(new Point(map.ActualWidth, map.ActualHeight), out bottomRight);
 
-      var response = await _app.Client.GetAsync<API.Response<API.Types.Vehicle>>(new API.Commands.VehiclesForLocation() {
+      var response = await _app.Client.GetAsync<API.Response<API.Types.Vehicle>>(new API.Commands.VehiclesForLocation()
+      {
         lat = (topLeft.Position.Latitude + bottomRight.Position.Latitude) * 0.5,
         lon = (topLeft.Position.Longitude + bottomRight.Position.Longitude) * 0.5,
         latSpan = Math.Abs(topLeft.Position.Latitude - bottomRight.Position.Latitude) * 0.5,
@@ -142,57 +158,56 @@ namespace FutarWP.Pages
       });
 
       var vehicles = response?.data?.list;
-      if (vehicles != null)
+      if (vehicles == null)
       {
-        // Remove vehicles that are not in dictionary
-        var toDelete = new List<string>();
-        foreach (var kvp in _vehicleIcons)
+        return;
+      }
+      // Remove vehicles that are not in dictionary
+      var toDelete = new List<string>();
+      foreach (var kvp in _vehicleIcons)
+      {
+        if (vehicles.FirstOrDefault(s => s.vehicleId == kvp.Key) == null)
         {
-          if (vehicles.FirstOrDefault(s => s.vehicleId == kvp.Key) == null)
-          {
-            toDelete.Remove(kvp.Key);
-          }
-        }
-        foreach (var id in toDelete)
-        {
-          map.MapElements.Remove(_vehicleIcons[id]);
-          _vehicleIcons.Remove(id);
-        }
-
-        // Add/update the rest
-        foreach (var vehicle in vehicles)
-        {
-          MapIcon icon = null;
-          var id = vehicle.tripId;
-          if (id == null)
-          {
-            continue; // Vehicle is out of service(?)
-          }
-          if (!_vehicleIcons.ContainsKey(id))
-          {
-            icon = new MapIcon();
-            icon.Image = RandomAccessStreamReference.CreateFromUri(new Uri(vehicle.style.icon.URL));
-            _vehicleIcons.Add(id, icon);
-            map.MapElements.Add(icon);
-          }
-          else
-          {
-            icon = _vehicleIcons[id];
-          }
-
-          icon.Location = new Geopoint(new BasicGeoposition()
-          {
-            Latitude = vehicle.location.lat,
-            Longitude = vehicle.location.lon,
-          });
-          if (_selectedTripID == id)
-          {
-            map.Center = icon.Location;
-          }
+          toDelete.Remove(kvp.Key);
         }
       }
+      foreach (var id in toDelete)
+      {
+        map.MapElements.Remove(_vehicleIcons[id]);
+        _vehicleIcons.Remove(id);
+      }
 
-      _vehiclesAreUpdating = 0;
+      // Add/update the rest
+      foreach (var vehicle in vehicles)
+      {
+        MapIcon icon = null;
+        var id = vehicle.tripId;
+        if (id == null)
+        {
+          continue; // Vehicle is out of service(?)
+        }
+        if (!_vehicleIcons.ContainsKey(id))
+        {
+          icon = new MapIcon();
+          icon.Image = RandomAccessStreamReference.CreateFromUri(new Uri(vehicle.style.icon.URL));
+          _vehicleIcons.Add(id, icon);
+          map.MapElements.Add(icon);
+        }
+        else
+        {
+          icon = _vehicleIcons[id];
+        }
+
+        icon.Location = new Geopoint(new BasicGeoposition()
+        {
+          Latitude = vehicle.location.lat,
+          Longitude = vehicle.location.lon,
+        });
+        if (tripInlay.TripID == id)
+        {
+          map.Center = icon.Location;
+        }
+      }
     }
 
     protected async override void OnNavigatedTo(NavigationEventArgs e)

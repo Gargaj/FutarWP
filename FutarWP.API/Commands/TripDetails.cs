@@ -31,7 +31,7 @@ namespace FutarWP.API.Commands
     public ulong predictedArrivalTime;
     public ulong predictedDepartureTime;
     public bool requiresBooking;
-    public ulong stopSequence;
-    public ulong shapeDistTraveled;
+    public uint stopSequence;
+    public uint shapeDistTraveled;
   }
 }

@@ -13,7 +13,7 @@
 
   <Grid>
     <Grid.RowDefinitions>
-      <RowDefinition Height="30"/>
+      <RowDefinition Height="40"/>
       <RowDefinition Height="*"/>
     </Grid.RowDefinitions>
     <Grid.ColumnDefinitions>
@@ -21,8 +21,13 @@
       <ColumnDefinition Width="32"/>
     </Grid.ColumnDefinitions>
     <StackPanel Grid.Row="0" Orientation="Horizontal">
-      <TextBlock Text="{Binding RouteShortName}" FontSize="20" FontWeight="Bold" Margin="10,0,10,5" VerticalAlignment="Bottom"/>
-      <TextBlock Text="{Binding RouteDescription}" VerticalAlignment="Bottom" Margin="0,0,0,6"/>
+      <Image Grid.Column="0" Width="24" Height="24" VerticalAlignment="Center" Margin="10,4,0,0">
+        <Image.Source>
+          <BitmapImage UriSource="{Binding IconURL}"/>
+        </Image.Source>
+      </Image>
+      <TextBlock Text="{Binding RouteShortName}" FontSize="20" FontWeight="Bold" Margin="5,0,0,5" VerticalAlignment="Bottom"/>
+      <TextBlock Text="{Binding RouteDescription}" VerticalAlignment="Bottom" Margin="10,0,0,6"/>
     </StackPanel>
     <Button Grid.Row="0" Grid.Column="1" Click="ClosePane_Click" Background="Transparent">
       <FontIcon Glyph="&#xE711;" FontSize="12"/>
@@ -39,7 +44,7 @@
       <ListView.ItemTemplate>
         <DataTemplate>
           <StackPanel Orientation="Horizontal">
-            <TextBlock Text="{Binding DepartureTimeString}" Margin="15,0,10,5" Foreground="Green">
+            <TextBlock Text="{Binding TimeString}" Margin="15,0,10,5" Foreground="Green">
               <i:Interaction.Behaviors>
                 <c:DataTriggerBehavior Binding="{Binding IsPassed}" Value="True">
                   <c:ChangePropertyAction PropertyName="Opacity" Value="0.5" />

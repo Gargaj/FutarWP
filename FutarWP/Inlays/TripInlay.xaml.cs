@@ -1,8 +1,11 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.ComponentModel;
+using System.Threading.Tasks;
+using Windows.Devices.Geolocation;
 using Windows.UI.Xaml;
 using Windows.UI.Xaml.Controls;
+using Windows.UI.Xaml.Controls.Maps;
 
 namespace FutarWP.Inlays
 {
@@ -23,12 +26,20 @@ namespace FutarWP.Inlays
     }
 
     public string TripID { get; set; }
+    public MapIcon MapElement { get; set; }
+    public string IconURL { get; set; }
+    public uint StopSequenceIndex { get; set; }
     public string RouteShortName { get; set; }
     public string RouteDescription { get; set; }
     public List<Stop> Stops { get; set; }
 
-    public async void Refresh()
+    public async Task Refresh()
     {
+      if (string.IsNullOrEmpty(TripID))
+      {
+        return;
+      }
+
       var response = await _app.Client.GetAsync<API.Response<API.Commands.TripDetailsEntry>>(new API.Commands.TripDetails()
       {
         tripId = TripID,
@@ -43,18 +54,31 @@ namespace FutarWP.Inlays
         return;
       }
 
-      RouteShortName = response.data.references.routes[entry.vehicle.routeId].shortName;
-      OnPropertyChanged(nameof(RouteShortName));
-      RouteDescription = response.data.references.routes[entry.vehicle.routeId].description;
-      OnPropertyChanged(nameof(RouteDescription));
+      if (entry.vehicle != null)
+      {
+        _mainPage.Map.Center = MapElement.Location = new Geopoint(new BasicGeoposition()
+        {
+          Latitude = entry.vehicle.location.lat,
+          Longitude = entry.vehicle.location.lon,
+        });
+
+        IconURL = entry.vehicle.style.icon.URL;
+        OnPropertyChanged(nameof(IconURL));
+        RouteShortName = response.data.references.routes[entry.vehicle.routeId].shortName;
+        OnPropertyChanged(nameof(RouteShortName));
+        RouteDescription = response.data.references.routes[entry.vehicle.routeId].description;
+        OnPropertyChanged(nameof(RouteDescription));
+        StopSequenceIndex = entry.vehicle.stopSequence;
+        OnPropertyChanged(nameof(StopSequenceIndex));
+      }
 
       foreach (var stop in response.data.entry.stopTimes)
       {
-        Stops.Add(new Stop(){
+        Stops.Add(new Stop(this){
           ArrivalTime = UnixTimeStampToDateTime(stop.arrivalTime),
-          ArrivalTimeString = UnixTimeStampToDateTime(stop.arrivalTime).ToString("HH:mm"),
-          DepartureTimeString = UnixTimeStampToDateTime(stop.departureTime).ToString("HH:mm"),
+          DepartureTime = UnixTimeStampToDateTime(stop.departureTime),
           Name = response.data.references.stops[stop.stopId].name,
+          StopSequenceIndex = stop.stopSequence,
         });
       }
 
@@ -88,11 +112,17 @@ namespace FutarWP.Inlays
 
     public class Stop
     {
+      private TripInlay _parent;
+      public Stop(TripInlay parent)
+      {
+        _parent = parent;
+      }
       public DateTime ArrivalTime { get; set; }
-      public string ArrivalTimeString { get; set; }
-      public string DepartureTimeString { get; set; }
+      public DateTime DepartureTime { get; set; }
+      public string TimeString => ArrivalTime.Year != 0 ? ArrivalTime.ToString("HH:mm") : DepartureTime.ToString("HH:mm");
       public string Name { get; set; }
-      public bool IsPassed { get { return DateTime.Now > ArrivalTime; } }
+      public uint StopSequenceIndex { get; set; }
+      public bool IsPassed { get { return _parent.StopSequenceIndex > StopSequenceIndex; } }
     }
   }
 }
