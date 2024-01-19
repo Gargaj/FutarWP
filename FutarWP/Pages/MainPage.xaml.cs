@@ -15,8 +15,14 @@ namespace FutarWP.Pages
 {
   public partial class MainPage : Page, INotifyPropertyChanged
   {
-    private readonly float _vehicleMinZoomLevel = 16.0f;
-    private readonly float _stopsMinZoomLevel = 12.0f;
+    private readonly float VehicleMinZoomLevel = 16.0f;
+    private readonly float StopsMinZoomLevel = 12.0f;
+
+    public static readonly int ZIdxRouteLine = 10;
+    public static readonly int ZIdxStops = 20;
+    public static readonly int ZIdxVehicles = 30;
+    public static readonly int ZIdxLocation = 40;
+
     private string _mapToken = string.Empty;
     private App _app;
     private MapIcon _mapIcon = new MapIcon();
@@ -159,7 +165,7 @@ namespace FutarWP.Pages
 
     protected async Task RequestVehicleUpdate()
     {
-      bool outsideZoomLevel = map.ZoomLevel < _vehicleMinZoomLevel;
+      bool outsideZoomLevel = map.ZoomLevel < VehicleMinZoomLevel;
 
       // 5s throttling
       if (!outsideZoomLevel && _vehicleUpdateStopwatch.IsRunning && _vehicleUpdateStopwatch.ElapsedMilliseconds < 5000)
@@ -213,7 +219,7 @@ namespace FutarWP.Pages
         return;
       }
 
-      bool outsideZoomLevel = map.ZoomLevel < _stopsMinZoomLevel;
+      bool outsideZoomLevel = map.ZoomLevel < StopsMinZoomLevel;
       if (outsideZoomLevel)
       {
         return;
@@ -259,18 +265,15 @@ namespace FutarWP.Pages
         var id = stop.id;
         if (!_stopIcons.ContainsKey(id))
         {
-          icon = new MapIcon();
-/*
-          if (!string.IsNullOrEmpty(stop.IconURL))
+          icon = new MapIcon()
           {
-            icon.Image = RandomAccessStreamReference.CreateFromUri(new Uri(stop.IconURL));
-          }
-*/
-          icon.Location = new Geopoint(new BasicGeoposition()
-          {
-            Latitude = stop.lat,
-            Longitude = stop.lon,
-          });
+            ZIndex = ZIdxStops,
+            Location = new Geopoint(new BasicGeoposition()
+            {
+              Latitude = stop.lat,
+              Longitude = stop.lon,
+            })
+          };
           _stopIcons.Add(id, icon);
           map.MapElements.Add(icon);
         }
@@ -344,8 +347,11 @@ namespace FutarWP.Pages
       }
       if (!_vehicleIcons.ContainsKey(id))
       {
-        icon = new MapIcon();
-        icon.Image = RandomAccessStreamReference.CreateFromUri(new Uri(vehicle.style.icon.URL));
+        icon = new MapIcon()
+        {
+          ZIndex = ZIdxVehicles,
+          Image = RandomAccessStreamReference.CreateFromUri(new Uri(vehicle.style.icon.URL)),
+        };
         _vehicleIcons.Add(id, icon);
         map.MapElements.Add(icon);
       }
@@ -404,6 +410,7 @@ namespace FutarWP.Pages
           _geolocator = new Geolocator();
           _geolocator.PositionChanged += Geolocator_PositionChanged;
 
+          _mapIcon.ZIndex = ZIdxLocation;
           map.MapElements.Add(_mapIcon);
         }
       });

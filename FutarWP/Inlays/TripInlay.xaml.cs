@@ -15,6 +15,7 @@ namespace FutarWP.Inlays
   {
     private App _app;
     private Pages.MainPage _mainPage;
+    private MapElement _routePath;
 
     public TripInlay()
     {
@@ -38,6 +39,12 @@ namespace FutarWP.Inlays
     public void Flush()
     {
       TripID = string.Empty;
+
+      if (_routePath != null)
+      {
+        _mainPage.Map.MapElements.Remove(_routePath);
+        _routePath = null;
+      }
 
       RouteShortName = string.Empty;
       OnPropertyChanged(nameof(RouteShortName));
@@ -68,6 +75,19 @@ namespace FutarWP.Inlays
 
       var trip = response.data.references.trips[TripID];
       var route = response.data.references.routes[trip.routeId];
+
+      if (_routePath == null)
+      {
+        _routePath = new MapPolyline()
+        {
+          ZIndex = Pages.MainPage.ZIdxRouteLine,
+          Path = new Geopath(entry.polyline.Points),
+          StrokeThickness = 3,
+          StrokeColor = API.Helpers.ColorFromRGBHex(route.color),
+        };
+        _mainPage.Map.MapElements.Add(_routePath);
+      }
+
 
       RouteShortName = route.shortName;
       OnPropertyChanged(nameof(RouteShortName));

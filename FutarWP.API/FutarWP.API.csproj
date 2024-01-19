@@ -127,6 +127,7 @@
     <Compile Include="Helpers.cs" />
     <Compile Include="Types\Agency.cs" />
     <Compile Include="Types\LatLon.cs" />
+    <Compile Include="Types\Polyline.cs" />
     <Compile Include="Types\StopTime.cs" />
     <Compile Include="Types\Style.cs" />
     <Compile Include="Types\Vehicle.cs" />

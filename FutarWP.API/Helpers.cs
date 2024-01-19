@@ -55,5 +55,13 @@ namespace FutarWP.API
 
       return output;
     }
+
+    public static Windows.UI.Color ColorFromRGBHex(string hexColor)
+    {
+      byte r = byte.Parse(hexColor.Substring(0, 2), System.Globalization.NumberStyles.HexNumber);
+      byte g = byte.Parse(hexColor.Substring(2, 2), System.Globalization.NumberStyles.HexNumber);
+      byte b = byte.Parse(hexColor.Substring(4, 2), System.Globalization.NumberStyles.HexNumber);
+      return Windows.UI.Color.FromArgb(255, r, g, b);
+    }
   }
 }
