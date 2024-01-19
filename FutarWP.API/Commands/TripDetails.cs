@@ -18,20 +18,8 @@ namespace FutarWP.API.Commands
     public Types.Vehicle vehicle;
     public object polyline; // todo
     public List<object> alertIds;
-    public List<StopTime> stopTimes;
+    public List<Types.StopTime> stopTimes;
     public bool mayRequireBooking;
   }
 
-  public class StopTime
-  {
-    public string stopId;
-    public string stopHeadsign;
-    public ulong arrivalTime;
-    public ulong departureTime;
-    public ulong predictedArrivalTime;
-    public ulong predictedDepartureTime;
-    public bool requiresBooking;
-    public uint stopSequence;
-    public uint shapeDistTraveled;
-  }
 }

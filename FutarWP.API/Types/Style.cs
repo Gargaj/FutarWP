@@ -5,6 +5,7 @@ namespace FutarWP.API.Types
   public class Style
   {
     public Icon icon;
+    public Icon vehicleIcon;
     public List<string> colors;
   }
 
@@ -14,6 +15,8 @@ namespace FutarWP.API.Types
     public string color;
     public string secondaryColor;
 
+    public string BackgroundColor => $"#{color}";
+    public string ForegroundColor => $"#{secondaryColor}";
     public string URL
     {
       get

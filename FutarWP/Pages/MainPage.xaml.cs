@@ -16,15 +16,26 @@ namespace FutarWP.Pages
   public partial class MainPage : Page, INotifyPropertyChanged
   {
     private readonly float _vehicleMinZoomLevel = 16.0f;
+    private readonly float _stopsMinZoomLevel = 12.0f;
     private string _mapToken = string.Empty;
     private App _app;
     private MapIcon _mapIcon = new MapIcon();
     private Geolocator _geolocator = null;
+    private bool _mapReady = false;
     private bool _mapReset = false;
     private DispatcherTimer _vehicleUpdateTimer = new DispatcherTimer();
     private Dictionary<string, MapIcon> _vehicleIcons = new Dictionary<string, MapIcon>();
+    private Dictionary<string, MapIcon> _stopIcons = new Dictionary<string, MapIcon>();
     private int _updateRunning = 0; // Atomic check
-    private System.Diagnostics.Stopwatch _updateStopwatch = new System.Diagnostics.Stopwatch();
+    private System.Diagnostics.Stopwatch _vehicleUpdateStopwatch = new System.Diagnostics.Stopwatch();
+    private System.Diagnostics.Stopwatch _stopUpdateStopwatch = new System.Diagnostics.Stopwatch();
+
+    public enum Panes
+    {
+      None,
+      Trip,
+      Stop,
+    }
 
     public MainPage()
     {
@@ -45,9 +56,10 @@ namespace FutarWP.Pages
       //map.StyleSheet = MapStyleSheet.ParseFromJson(styleSheetJson);
     }
 
-    public string TopPaneHeight => PaneVisible ? "0.5*" : "*";
-    public string BottomPaneHeight => PaneVisible ? "0.5*" : "0";
-    public bool PaneVisible { get; set; } = false;
+    public string MapHeight => SelectedPane == Panes.None ? "*" : "0.5*";
+    public string TripPaneHeight => SelectedPane == Panes.Trip ? "0.5*" : "0";
+    public string StopPaneHeight => SelectedPane == Panes.Stop ? "0.5*" : "0";
+    public Panes SelectedPane { get; set; } = Panes.None;
     public MapControl Map => map;
 
     private async void Map_MapElementClick(MapControl sender, MapElementClickEventArgs args)
@@ -61,28 +73,71 @@ namespace FutarWP.Pages
       var vehicleKVP = _vehicleIcons.FirstOrDefault(kvp => kvp.Value == mapIcon);
       if (vehicleKVP.Key != null)
       {
-        tripInlay.TripID = vehicleKVP.Key;
-        tripInlay.MapElement = vehicleKVP.Value;
-        map.Center = vehicleKVP.Value.Location;
-
-        PaneVisible = true;
-        OnPropertyChanged(nameof(PaneVisible));
-        OnPropertyChanged(nameof(TopPaneHeight));
-        OnPropertyChanged(nameof(BottomPaneHeight));
-       
-        //vehicleKVP.Value.MapStyleSheetEntry = "selected";
-        await tripInlay.Refresh();
+        await SelectTrip(vehicleKVP.Key);
       }
+
+      var stopKVP = _stopIcons.FirstOrDefault(kvp => kvp.Value == mapIcon);
+      if (stopKVP.Key != null)
+      {
+        await SelectStop(stopKVP.Key);
+      }
+
+    }
+
+    public async Task SelectTrip(string tripID)
+    {
+      stopInlay.Flush();
+
+      tripInlay.Flush();
+      tripInlay.TripID = tripID;
+      if (_vehicleIcons.ContainsKey(tripID))
+      {
+        tripInlay.MapElement = _vehicleIcons[tripID];
+        map.Center = tripInlay.MapElement.Location;
+      }
+
+      SelectedPane = Panes.Trip;
+      OnPropertyChanged(nameof(MapHeight));
+      OnPropertyChanged(nameof(TripPaneHeight));
+      OnPropertyChanged(nameof(StopPaneHeight));
+
+      //vehicleKVP.Value.MapStyleSheetEntry = "selected";
+      await tripInlay.Refresh();
+    }
+
+    public async Task SelectStop(string stopID)
+    {
+      tripInlay.Flush();
+
+      stopInlay.Flush();
+      stopInlay.StopID = stopID;
+      if (_stopIcons.ContainsKey(stopID))
+      {
+        map.Center = _stopIcons[stopID].Location;
+      }
+
+      SelectedPane = Panes.Stop;
+      OnPropertyChanged(nameof(MapHeight));
+      OnPropertyChanged(nameof(TripPaneHeight));
+      OnPropertyChanged(nameof(StopPaneHeight));
+
+      //vehicleKVP.Value.MapStyleSheetEntry = "selected";
+      await stopInlay.Refresh();
     }
 
     public void ClosePane()
     {
+      tripInlay.Flush();
       tripInlay.TripID = string.Empty;
       tripInlay.MapElement = null;
-      PaneVisible = false;
-      OnPropertyChanged(nameof(PaneVisible));
-      OnPropertyChanged(nameof(TopPaneHeight));
-      OnPropertyChanged(nameof(BottomPaneHeight));
+
+      stopInlay.Flush();
+      stopInlay.StopID = string.Empty;
+      
+      SelectedPane = Panes.None;
+      OnPropertyChanged(nameof(MapHeight));
+      OnPropertyChanged(nameof(TripPaneHeight));
+      OnPropertyChanged(nameof(StopPaneHeight));
     }
 
     private async void _vehicleUpdateTimer_Tick(object sender, object e)
@@ -93,11 +148,13 @@ namespace FutarWP.Pages
     private async void Map_ZoomLevelChanged(MapControl sender, object args)
     {
       await RequestVehicleUpdate();
+      await RequestStopList();
     }
 
     private async void Map_CenterChanged(MapControl sender, object args)
     {
       await RequestVehicleUpdate();
+      await RequestStopList();
     }
 
     protected async Task RequestVehicleUpdate()
@@ -105,7 +162,7 @@ namespace FutarWP.Pages
       bool outsideZoomLevel = map.ZoomLevel < _vehicleMinZoomLevel;
 
       // 5s throttling
-      if (!outsideZoomLevel && _updateStopwatch.IsRunning && _updateStopwatch.ElapsedMilliseconds < 5000)
+      if (!outsideZoomLevel && _vehicleUpdateStopwatch.IsRunning && _vehicleUpdateStopwatch.ElapsedMilliseconds < 5000)
       {
         return;
       }
@@ -116,14 +173,20 @@ namespace FutarWP.Pages
         return;
       }
 
-      if (PaneVisible)
+      _vehicleUpdateStopwatch.Restart();
+
+      if (SelectedPane == Panes.Trip)
       {
         await tripInlay.Refresh();
-        _updateRunning = 0;
+        System.Threading.Interlocked.Exchange(ref _updateRunning, 0);
         return;
       }
 
-      _updateStopwatch.Restart();
+      if (SelectedPane == Panes.Stop)
+      {
+        await stopInlay.Refresh();
+        // Don't return, we want vehicles to update too
+      }
 
       if (outsideZoomLevel)
       {
@@ -133,26 +196,103 @@ namespace FutarWP.Pages
           map.MapElements.Remove(_vehicleIcons[id]);
           _vehicleIcons.Remove(id);
         }
-        _updateStopwatch.Reset();
-        _updateRunning = 0;
+        _vehicleUpdateStopwatch.Reset();
+        System.Threading.Interlocked.Exchange(ref _updateRunning, 0);
         return;
       }
 
       await RefreshVehicleIcons();
 
-      _updateRunning = 0;
+      System.Threading.Interlocked.Exchange(ref _updateRunning, 0);
     }
 
-    private async Task RefreshVehicleIcons()
+    private async Task RequestStopList()
     {
+      if (!_mapReady)
+      {
+        return;
+      }
+
+      bool outsideZoomLevel = map.ZoomLevel < _stopsMinZoomLevel;
+      if (outsideZoomLevel)
+      {
+        return;
+      }
+
+      if ( _stopUpdateStopwatch.IsRunning && _stopUpdateStopwatch.ElapsedMilliseconds < 5000)
+      {
+        return;
+      }
+
+      _stopUpdateStopwatch.Restart();
+
       Geopoint topLeft, bottomRight;
       try
       {
         map.GetLocationFromOffset(new Point(0, 0), out topLeft);
         map.GetLocationFromOffset(new Point(map.ActualWidth, map.ActualHeight), out bottomRight);
       }
-      catch (Exception e)
+      catch (Exception)
       {
+        // No idea why this happens
+        return;
+      }
+
+      var response = await _app.Client.GetAsync<API.Response<API.Types.Stop>>(new API.Commands.StopsForLocation()
+      {
+        lat = (topLeft.Position.Latitude + bottomRight.Position.Latitude) * 0.5,
+        lon = (topLeft.Position.Longitude + bottomRight.Position.Longitude) * 0.5,
+        latSpan = Math.Abs(topLeft.Position.Latitude - bottomRight.Position.Latitude) * 0.5,
+        lonSpan = Math.Abs(topLeft.Position.Longitude - bottomRight.Position.Longitude) * 0.5,
+      });
+
+      var stops = response?.data?.list;
+      if (stops == null)
+      {
+        return;
+      }
+
+      // Add/update the rest
+      foreach (var stop in stops)
+      {
+        MapIcon icon = null;
+        var id = stop.id;
+        if (!_stopIcons.ContainsKey(id))
+        {
+          icon = new MapIcon();
+/*
+          if (!string.IsNullOrEmpty(stop.IconURL))
+          {
+            icon.Image = RandomAccessStreamReference.CreateFromUri(new Uri(stop.IconURL));
+          }
+*/
+          icon.Location = new Geopoint(new BasicGeoposition()
+          {
+            Latitude = stop.lat,
+            Longitude = stop.lon,
+          });
+          _stopIcons.Add(id, icon);
+          map.MapElements.Add(icon);
+        }
+      }
+    }
+
+    private async Task RefreshVehicleIcons()
+    {
+      if (!_mapReady)
+      {
+        return;
+      }
+
+      Geopoint topLeft, bottomRight;
+      try
+      {
+        map.GetLocationFromOffset(new Point(0, 0), out topLeft);
+        map.GetLocationFromOffset(new Point(map.ActualWidth, map.ActualHeight), out bottomRight);
+      }
+      catch (Exception)
+      {
+        // No idea why this happens
         return;
       }
 
@@ -187,36 +327,40 @@ namespace FutarWP.Pages
       // Add/update the rest
       foreach (var vehicle in vehicles)
       {
-        MapIcon icon = null;
-        var id = vehicle.tripId;
-        if (id == null)
-        {
-          continue; // Vehicle is out of service(?)
-        }
-        if (!_vehicleIcons.ContainsKey(id))
-        {
-          icon = new MapIcon();
-          icon.Image = RandomAccessStreamReference.CreateFromUri(new Uri(vehicle.style.icon.URL));
-          _vehicleIcons.Add(id, icon);
-          map.MapElements.Add(icon);
-        }
-        else
-        {
-          icon = _vehicleIcons[id];
-        }
-
-        icon.Location = new Geopoint(new BasicGeoposition()
-        {
-          Latitude = vehicle.location.lat,
-          Longitude = vehicle.location.lon,
-        });
-        if (tripInlay.TripID == id)
+        var icon = UpdateVehicleIconFromRecord(vehicle);
+        if (icon != null && tripInlay.TripID == vehicle.tripId)
         {
           map.Center = icon.Location;
         }
       }
     }
+    public MapIcon UpdateVehicleIconFromRecord(API.Types.Vehicle vehicle)
+    {
+      MapIcon icon = null;
+      var id = vehicle.tripId;
+      if (id == null)
+      {
+        return null; // Vehicle is out of service(?)
+      }
+      if (!_vehicleIcons.ContainsKey(id))
+      {
+        icon = new MapIcon();
+        icon.Image = RandomAccessStreamReference.CreateFromUri(new Uri(vehicle.style.icon.URL));
+        _vehicleIcons.Add(id, icon);
+        map.MapElements.Add(icon);
+      }
+      else
+      {
+        icon = _vehicleIcons[id];
+      }
 
+      icon.Location = new Geopoint(new BasicGeoposition()
+      {
+        Latitude = vehicle.location.lat,
+        Longitude = vehicle.location.lon,
+      });
+      return icon;
+    }
     protected async override void OnNavigatedTo(NavigationEventArgs e)
     {
       base.OnNavigatedTo(e);
@@ -239,7 +383,7 @@ namespace FutarWP.Pages
       var response = await _app.Client.GetAsync<API.Response<API.Commands.MetadataEntry>>(new API.Commands.Metadata());
       var entry = response?.data?.entry;
       if (entry != null)
-      {        
+      {
         var bb = new GeoboundingBox(new BasicGeoposition() {
           Latitude = entry.upperRightLatitude,
           Longitude = entry.lowerLeftLongitude,
@@ -249,6 +393,7 @@ namespace FutarWP.Pages
           Longitude = entry.upperRightLongitude,
         });
         await map.TrySetViewBoundsAsync(bb, null, MapAnimationKind.None);
+        _mapReady = true;
       }
 
       await Dispatcher.RunAsync(Windows.UI.Core.CoreDispatcherPriority.Normal, async () =>

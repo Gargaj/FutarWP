@@ -14,10 +14,12 @@
 
   <Grid>
     <Grid.RowDefinitions>
-      <RowDefinition Height="{Binding TopPaneHeight}"/>
-      <RowDefinition Height="{Binding BottomPaneHeight}"/>
+      <RowDefinition Height="{Binding MapHeight}"/>
+      <RowDefinition Height="{Binding TripPaneHeight}"/>
+      <RowDefinition Height="{Binding StopPaneHeight}"/>
     </Grid.RowDefinitions>
-    <Maps:MapControl Grid.Row="0" x:Name="map"/>
+    <Maps:MapControl Grid.Row="0" x:Name="map" TransitFeaturesVisible="False"/>
     <inlays:TripInlay Grid.Row="1" x:Name="tripInlay"/>
+    <inlays:StopInlay Grid.Row="2" x:Name="stopInlay"/>
   </Grid>
 </Page>

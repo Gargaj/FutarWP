@@ -35,6 +35,18 @@ namespace FutarWP.Inlays
     public string RouteDescription { get; set; }
     public ObservableCollection<Stop> Stops { get; set; }
 
+    public void Flush()
+    {
+      TripID = string.Empty;
+
+      RouteShortName = string.Empty;
+      OnPropertyChanged(nameof(RouteShortName));
+      RouteDescription = string.Empty;
+      OnPropertyChanged(nameof(RouteDescription));
+      Stops.Clear();
+      OnPropertyChanged(nameof(Stops));
+    }
+
     public async Task Refresh()
     {
       if (string.IsNullOrEmpty(TripID))
@@ -54,20 +66,31 @@ namespace FutarWP.Inlays
         return;
       }
 
+      var trip = response.data.references.trips[TripID];
+      var route = response.data.references.routes[trip.routeId];
+
+      RouteShortName = route.shortName;
+      OnPropertyChanged(nameof(RouteShortName));
+      RouteDescription = route.description;
+      OnPropertyChanged(nameof(RouteDescription));
+
       if (entry.vehicle != null)
       {
-        _mainPage.Map.Center = MapElement.Location = new Geopoint(new BasicGeoposition()
+        if (MapElement == null)
         {
-          Latitude = entry.vehicle.location.lat,
-          Longitude = entry.vehicle.location.lon,
-        });
+          MapElement = _mainPage.UpdateVehicleIconFromRecord(entry.vehicle);
+        }
+        else
+        {
+          _mainPage.Map.Center = MapElement.Location = new Geopoint(new BasicGeoposition()
+          {
+            Latitude = entry.vehicle.location.lat,
+            Longitude = entry.vehicle.location.lon,
+          });
+        }
 
         IconURL = entry.vehicle.style.icon.URL;
         OnPropertyChanged(nameof(IconURL));
-        RouteShortName = response.data.references.routes[entry.vehicle.routeId].shortName;
-        OnPropertyChanged(nameof(RouteShortName));
-        RouteDescription = response.data.references.routes[entry.vehicle.routeId].description;
-        OnPropertyChanged(nameof(RouteDescription));
         StopSequenceIndex = entry.vehicle.stopSequence;
         OnPropertyChanged(nameof(StopSequenceIndex));
       }
@@ -85,20 +108,12 @@ namespace FutarWP.Inlays
           };
           Stops.Add(stop);
         }
-        stop.ArrivalTime = UnixTimeStampToDateTime(stopTime.arrivalTime);
-        stop.DepartureTime = UnixTimeStampToDateTime(stopTime.departureTime);
+        stop.ArrivalTime = API.Helpers.UnixTimeStampToDateTime(stopTime.arrivalTime);
+        stop.DepartureTime = API.Helpers.UnixTimeStampToDateTime(stopTime.departureTime);
         stop.Update();
       }
 
       OnPropertyChanged(nameof(Stops));
-    }
-
-    public static DateTime UnixTimeStampToDateTime(ulong unixTimeStamp)
-    {
-      // Unix timestamp is seconds past epoch
-      DateTime dateTime = new DateTime(1970, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc);
-      dateTime = dateTime.AddSeconds(unixTimeStamp).ToLocalTime();
-      return dateTime;
     }
 
     private void TripInlay_Loaded(object sender, RoutedEventArgs e)
@@ -109,6 +124,13 @@ namespace FutarWP.Inlays
     private void ClosePane_Click(object sender, RoutedEventArgs e)
     {
       _mainPage?.ClosePane();
+    }
+
+    private async void Stop_Click(object sender, RoutedEventArgs e)
+    {
+      var button = sender as Button;
+      var stop = button.DataContext as Stop;
+      await _mainPage?.SelectStop(stop.ID);
     }
 
     public event PropertyChangedEventHandler PropertyChanged;
@@ -128,14 +150,16 @@ namespace FutarWP.Inlays
       public string ID { get; set; }
       public DateTime ArrivalTime { get; set; }
       public DateTime DepartureTime { get; set; }
-      public string TimeString => ArrivalTime.Year != 0 ? ArrivalTime.ToString("HH:mm") : DepartureTime.ToString("HH:mm");
+      public string ArrivalTimeString => ArrivalTime.Year > 1 ? ArrivalTime.ToString("HH:mm") : string.Empty;
+      public string DepartureTimeString => DepartureTime.Year > 1 ? DepartureTime.ToString("HH:mm") : string.Empty;
       public string Name { get; set; }
       public uint StopSequenceIndex { get; set; }
       public bool IsPassed { get { return _parent.StopSequenceIndex > StopSequenceIndex; } }
 
       public void Update()
       {
-        OnPropertyChanged(nameof(TimeString));
+        OnPropertyChanged(nameof(ArrivalTimeString));
+        OnPropertyChanged(nameof(DepartureTimeString));
         OnPropertyChanged(nameof(Name));
         OnPropertyChanged(nameof(IsPassed));
       }

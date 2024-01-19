@@ -124,8 +124,10 @@
     <Compile Include="Commands\ArrivalsAndDeparturesForStop.cs" />
     <Compile Include="Commands\Metadata.cs" />
     <Compile Include="Commands\TripDetails.cs" />
+    <Compile Include="Helpers.cs" />
     <Compile Include="Types\Agency.cs" />
     <Compile Include="Types\LatLon.cs" />
+    <Compile Include="Types\StopTime.cs" />
     <Compile Include="Types\Style.cs" />
     <Compile Include="Types\Vehicle.cs" />
     <Compile Include="Types\Trip.cs" />

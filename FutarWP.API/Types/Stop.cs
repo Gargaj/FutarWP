@@ -18,6 +18,6 @@ namespace FutarWP.API.Types
     public bool wheelchairBoarding;
     public List<string> routeIds;
     public string stopColorType;
-    public Style style; // TODO
+    public Style style;
   }
 }

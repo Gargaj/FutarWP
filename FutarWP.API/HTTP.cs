@@ -15,12 +15,13 @@ namespace FutarWP.API
 
     public async Task<MemoryStream> DoHTTPRequestStreamAsync(string url, byte[] data, NameValueCollection headers = null, string method = "POST", Func<long, long, bool> callback = null)
     {
-      HttpWebRequest _httpWReq = (HttpWebRequest)WebRequest.Create(url);
+      var httpClient = new System.Net.Http.HttpClient();
 
-      _httpWReq.Method = method;
+      /*
+      httpWebRequest.Method = method;
       if (method == "POST" && data != null)
       {
-        _httpWReq.ContentType = "application/x-www-form-urlencoded";
+        httpWebRequest.ContentType = "application/x-www-form-urlencoded";
         //_httpWReq.ContentLength = data.Length;
       }
 
@@ -28,7 +29,7 @@ namespace FutarWP.API
       {
         if (headers["Content-Type"] != null)
         {
-          _httpWReq.ContentType = headers["Content-Type"];
+          httpWebRequest.ContentType = headers["Content-Type"];
           headers.Remove("Content-Type");
         }
         //         if (headers["User-Agent"] != null)
@@ -38,7 +39,7 @@ namespace FutarWP.API
         //         }
         if (headers["Accept"] != null)
         {
-          _httpWReq.Accept = headers["Accept"];
+          httpWebRequest.Accept = headers["Accept"];
           headers.Remove("Accept");
         }
         //         if (headers["Referer"] != null)
@@ -48,60 +49,40 @@ namespace FutarWP.API
         //         }
         foreach (var key in headers.AllKeys)
         {
-          _httpWReq.Headers[key] = headers[key];
+          httpWebRequest.Headers[key] = headers[key];
         }
       }
-      _httpWReq.CookieContainer = _cookieContainer;
+      httpWebRequest.CookieContainer = _cookieContainer;
+      httpWebRequest.Timeout = 1000;
 
       if (method == "POST")
       {
-        using (var stream = await _httpWReq.GetRequestStreamAsync())
+        using (var stream = await httpWebRequest.GetRequestStreamAsync())
         {
           await stream.WriteAsync(data, 0, data.Length);
         }
       }
 
       // May throw exception
-      var response = (HttpWebResponse)await _httpWReq.GetResponseAsync();
+      var response = (HttpWebResponse)await httpWebRequest.GetResponseAsync();
+      */
 
-      int bytesRead;
-      byte[] buffer = new byte[1024 * 1024];
-      MemoryStream memoryStream = null;
-      if (response.ContentLength > 0)
+      httpClient.Timeout = TimeSpan.FromSeconds(5);
+      System.Net.Http.HttpResponseMessage response = null;
+      try
       {
-        memoryStream = new MemoryStream((int)response.ContentLength);
-      }
-      else
-      {
-        memoryStream = new MemoryStream();
-      }
-      if (callback != null)
-      {
-        bool keepRunning = callback(0, response.ContentLength);
-        if (keepRunning == false)
+        if (method == "GET")
         {
-          return null;
+          response = await httpClient.GetAsync(url);
         }
       }
-      var stopwatch = new System.Diagnostics.Stopwatch();
-      stopwatch.Start();
-      var responseStream = response.GetResponseStream();
-
-      while ((bytesRead = await responseStream.ReadAsync(buffer, 0, buffer.Length)) > 0)
+      catch (TaskCanceledException)
       {
-        memoryStream.Write(buffer, 0, bytesRead);
-        if (callback != null && stopwatch.ElapsedMilliseconds > 1000)
-        {
-          stopwatch.Restart();
-          bool keepRunning = callback(memoryStream.Length, response.ContentLength);
-          if (keepRunning == false)
-          {
-            return null;
-          }
-        }
+        System.Diagnostics.Debug.WriteLine($"[TIMEOUT] {url}");
+        return null;
       }
-      memoryStream.Seek(0, SeekOrigin.Begin);
-      return memoryStream;
+
+      return new MemoryStream(await response.Content.ReadAsByteArrayAsync());
     }
 
     public async Task<Stream> DoHTTPRequestStreamAsync(string _url, MemoryStream _stream, NameValueCollection _headers = null, string _method = "POST", Func<long, long, bool> callback = null)

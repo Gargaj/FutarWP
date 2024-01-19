@@ -11,4 +11,13 @@ namespace FutarWP.API.Commands
     public uint minutesBefore;
     public uint minutesAfter;
   }
+
+  public class ArrivalsAndDeparturesForStopEntry
+  {
+    public string stopId;
+    public List<string> routeIds;
+    public List<string> alertIds;
+    public List<string> nearbyStopIds;
+    public List<Types.StopTime> stopTimes;
+  }
 }
