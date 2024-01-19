@@ -123,6 +123,7 @@
     <Compile Include="Client.cs" />
     <Compile Include="Commands\ArrivalsAndDeparturesForStop.cs" />
     <Compile Include="Commands\Metadata.cs" />
+    <Compile Include="Commands\TripDetails.cs" />
     <Compile Include="Types\Agency.cs" />
     <Compile Include="Types\LatLon.cs" />
     <Compile Include="Types\Style.cs" />

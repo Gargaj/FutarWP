@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.ComponentModel;
 using System.Linq;
 using System.Threading.Tasks;
 using Windows.Devices.Geolocation;
@@ -12,7 +13,7 @@ using Windows.UI.Xaml.Navigation;
 
 namespace FutarWP.Pages
 {
-  public partial class MainPage : Page
+  public partial class MainPage : Page, INotifyPropertyChanged
   {
     private readonly string _mapToken = "AmNNDj__SOizR2a8LRio92V2pGpIcBXcv4VBbOAGD2FqEJ-Xw4it86-O4N5nFTBB";
     private readonly float _vehicleMinZoomLevel = 16.0f;
@@ -22,6 +23,7 @@ namespace FutarWP.Pages
     private bool _mapReset = false;
     private DispatcherTimer _vehicleUpdateTimer = new DispatcherTimer();
     private Dictionary<string, MapIcon> _vehicleIcons = new Dictionary<string, MapIcon>();
+    private string _selectedTripID = string.Empty;
     private int _vehiclesAreUpdating = 0; // Atomic check
     private System.Diagnostics.Stopwatch _vehicleUpdateStopwatch = new System.Diagnostics.Stopwatch();
 
@@ -35,8 +37,51 @@ namespace FutarWP.Pages
       _vehicleUpdateTimer.Tick += _vehicleUpdateTimer_Tick;
 
       map.MapServiceToken = _mapToken;
+      map.MapElementClick += Map_MapElementClick;
       map.CenterChanged += Map_CenterChanged;
       map.ZoomLevelChanged += Map_ZoomLevelChanged;
+
+      // TODO: figure this out
+      string styleSheetJson = @"{""version"": ""1.*"",""elements"":{""selected"":{ ""borderVisible"":true, ""borderOutlineColor"":""#FFFF00FF"", ""borderWidthScale"": 4 }}}";
+      map.StyleSheet = MapStyleSheet.ParseFromJson(styleSheetJson);
+    }
+
+    public string TopPaneHeight => PaneVisible ? "0.5*" : "*";
+    public string BottomPaneHeight => PaneVisible ? "0.5*" : "0";
+    public bool PaneVisible { get; set; } = false;
+
+    private void Map_MapElementClick(MapControl sender, MapElementClickEventArgs args)
+    {
+      var mapIcon = args.MapElements.FirstOrDefault() as MapIcon;
+      if (mapIcon == null)
+      {
+        return;
+      }
+
+      var vehicleKVP = _vehicleIcons.FirstOrDefault(kvp => kvp.Value == mapIcon);
+      if (vehicleKVP.Key != null)
+      {
+        _selectedTripID = vehicleKVP.Key;
+        map.Center = vehicleKVP.Value.Location;
+
+        PaneVisible = true;
+        OnPropertyChanged(nameof(PaneVisible));
+        OnPropertyChanged(nameof(TopPaneHeight));
+        OnPropertyChanged(nameof(BottomPaneHeight));
+       
+        vehicleKVP.Value.MapStyleSheetEntry = "selected";
+        tripInlay.TripID = vehicleKVP.Key;
+        tripInlay.Refresh();
+      }
+    }
+
+    public void ClosePane()
+    {
+      _selectedTripID = string.Empty;
+      PaneVisible = false;
+      OnPropertyChanged(nameof(PaneVisible));
+      OnPropertyChanged(nameof(TopPaneHeight));
+      OnPropertyChanged(nameof(BottomPaneHeight));
     }
 
     private async void _vehicleUpdateTimer_Tick(object sender, object e)
@@ -118,16 +163,21 @@ namespace FutarWP.Pages
         foreach (var vehicle in vehicles)
         {
           MapIcon icon = null;
-          if (!_vehicleIcons.ContainsKey(vehicle.vehicleId))
+          var id = vehicle.tripId;
+          if (id == null)
+          {
+            continue; // Vehicle is out of service(?)
+          }
+          if (!_vehicleIcons.ContainsKey(id))
           {
             icon = new MapIcon();
             icon.Image = RandomAccessStreamReference.CreateFromUri(new Uri(vehicle.style.icon.URL));
-            _vehicleIcons.Add(vehicle.vehicleId, icon);
+            _vehicleIcons.Add(id, icon);
             map.MapElements.Add(icon);
           }
           else
           {
-            icon = _vehicleIcons[vehicle.vehicleId];
+            icon = _vehicleIcons[id];
           }
 
           icon.Location = new Geopoint(new BasicGeoposition()
@@ -135,6 +185,10 @@ namespace FutarWP.Pages
             Latitude = vehicle.location.lat,
             Longitude = vehicle.location.lon,
           });
+          if (_selectedTripID == id)
+          {
+            map.Center = icon.Location;
+          }
         }
       }
 
@@ -200,6 +254,13 @@ namespace FutarWP.Pages
         }
         _mapIcon.Location = new Geopoint(args.Position.Coordinate.Point.Position);
       });
+    }
+
+    public event PropertyChangedEventHandler PropertyChanged;
+
+    public virtual void OnPropertyChanged(string propertyName)
+    {
+      PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
     }
   }
 }
