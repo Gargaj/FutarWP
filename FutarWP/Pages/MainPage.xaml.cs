@@ -15,8 +15,8 @@ namespace FutarWP.Pages
 {
   public partial class MainPage : Page, INotifyPropertyChanged
   {
-    private readonly string _mapToken = "AmNNDj__SOizR2a8LRio92V2pGpIcBXcv4VBbOAGD2FqEJ-Xw4it86-O4N5nFTBB";
     private readonly float _vehicleMinZoomLevel = 16.0f;
+    private string _mapToken = string.Empty;
     private App _app;
     private MapIcon _mapIcon = new MapIcon();
     private Geolocator _geolocator = null;
@@ -35,7 +35,7 @@ namespace FutarWP.Pages
       _vehicleUpdateTimer.Interval = TimeSpan.FromSeconds(10);
       _vehicleUpdateTimer.Tick += _vehicleUpdateTimer_Tick;
 
-      map.MapServiceToken = _mapToken;
+      map.MapServiceToken = BingCredentials.BingAPIMapKey;
       map.MapElementClick += Map_MapElementClick;
       map.CenterChanged += Map_CenterChanged;
       map.ZoomLevelChanged += Map_ZoomLevelChanged;
