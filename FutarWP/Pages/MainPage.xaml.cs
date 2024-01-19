@@ -146,8 +146,15 @@ namespace FutarWP.Pages
     private async Task RefreshVehicleIcons()
     {
       Geopoint topLeft, bottomRight;
-      map.GetLocationFromOffset(new Point(0, 0), out topLeft);
-      map.GetLocationFromOffset(new Point(map.ActualWidth, map.ActualHeight), out bottomRight);
+      try
+      {
+        map.GetLocationFromOffset(new Point(0, 0), out topLeft);
+        map.GetLocationFromOffset(new Point(map.ActualWidth, map.ActualHeight), out bottomRight);
+      }
+      catch (Exception e)
+      {
+        return;
+      }
 
       var response = await _app.Client.GetAsync<API.Response<API.Types.Vehicle>>(new API.Commands.VehiclesForLocation()
       {

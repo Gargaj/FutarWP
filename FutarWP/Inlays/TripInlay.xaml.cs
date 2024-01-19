@@ -1,6 +1,8 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Collections.ObjectModel;
 using System.ComponentModel;
+using System.Linq;
 using System.Threading.Tasks;
 using Windows.Devices.Geolocation;
 using Windows.UI.Xaml;
@@ -22,7 +24,7 @@ namespace FutarWP.Inlays
       Loaded += TripInlay_Loaded;
       DataContext = this;
 
-      Stops = new List<Stop>();
+      Stops = new ObservableCollection<Stop>();
     }
 
     public string TripID { get; set; }
@@ -31,7 +33,7 @@ namespace FutarWP.Inlays
     public uint StopSequenceIndex { get; set; }
     public string RouteShortName { get; set; }
     public string RouteDescription { get; set; }
-    public List<Stop> Stops { get; set; }
+    public ObservableCollection<Stop> Stops { get; set; }
 
     public async Task Refresh()
     {
@@ -45,8 +47,6 @@ namespace FutarWP.Inlays
         tripId = TripID,
         date = DateTime.Now.ToString("yyyyMMdd")
       });
-
-      Stops.Clear();
 
       var entry = response?.data?.entry;
       if (entry == null)
@@ -72,14 +72,22 @@ namespace FutarWP.Inlays
         OnPropertyChanged(nameof(StopSequenceIndex));
       }
 
-      foreach (var stop in response.data.entry.stopTimes)
+      foreach (var stopTime in response.data.entry.stopTimes)
       {
-        Stops.Add(new Stop(this){
-          ArrivalTime = UnixTimeStampToDateTime(stop.arrivalTime),
-          DepartureTime = UnixTimeStampToDateTime(stop.departureTime),
-          Name = response.data.references.stops[stop.stopId].name,
-          StopSequenceIndex = stop.stopSequence,
-        });
+        var stop = Stops.FirstOrDefault(s => s.ID == stopTime.stopId);
+        if (stop == null)
+        {
+          stop = new Stop(this)
+          {
+            ID = stopTime.stopId,
+            Name = response.data.references.stops[stopTime.stopId].name,
+            StopSequenceIndex = stopTime.stopSequence,
+          };
+          Stops.Add(stop);
+        }
+        stop.ArrivalTime = UnixTimeStampToDateTime(stopTime.arrivalTime);
+        stop.DepartureTime = UnixTimeStampToDateTime(stopTime.departureTime);
+        stop.Update();
       }
 
       OnPropertyChanged(nameof(Stops));
@@ -110,19 +118,34 @@ namespace FutarWP.Inlays
       PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
     }
 
-    public class Stop
+    public class Stop : INotifyPropertyChanged
     {
       private TripInlay _parent;
       public Stop(TripInlay parent)
       {
         _parent = parent;
       }
+      public string ID { get; set; }
       public DateTime ArrivalTime { get; set; }
       public DateTime DepartureTime { get; set; }
       public string TimeString => ArrivalTime.Year != 0 ? ArrivalTime.ToString("HH:mm") : DepartureTime.ToString("HH:mm");
       public string Name { get; set; }
       public uint StopSequenceIndex { get; set; }
       public bool IsPassed { get { return _parent.StopSequenceIndex > StopSequenceIndex; } }
+
+      public void Update()
+      {
+        OnPropertyChanged(nameof(TimeString));
+        OnPropertyChanged(nameof(Name));
+        OnPropertyChanged(nameof(IsPassed));
+      }
+
+      public event PropertyChangedEventHandler PropertyChanged;
+
+      public virtual void OnPropertyChanged(string propertyName)
+      {
+        PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
+      }
     }
   }
 }
