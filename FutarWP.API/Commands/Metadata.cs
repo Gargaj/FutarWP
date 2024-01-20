@@ -2,9 +2,9 @@
 
 namespace FutarWP.API.Commands
 {
-  public class Metadata : ICommand
+  public class Metadata : CommandBase
   {
-    public string Command => "metadata";
+    public override string Command => "metadata";
   }
 
   public class MetadataEntry

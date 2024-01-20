@@ -3,9 +3,11 @@ using System.Collections.Generic;
 
 namespace FutarWP.API
 {
-  public interface ICommand
+  public class CommandBase
   {
-    string Command { get; }
+    public virtual string Command { get; }
+    public virtual string CommandURL => $"/query/v1/ws/otp/api/where/{Command}.json";
+    public virtual bool ConcatenateStringArrays => true;
   }
 
   public class Response<T>

@@ -2,9 +2,9 @@
 
 namespace FutarWP.API.Commands
 {
-  public class TripDetails : ICommand
+  public class TripDetails : CommandBase
   {
-    public string Command => "trip-details";
+    public override string Command => "trip-details";
 
     public string tripId;
     public string date;

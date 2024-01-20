@@ -58,21 +58,21 @@ namespace FutarWP.API
     }
 
     public Settings Settings => _settings;
-    public async Task<T> GetAsync<T>(ICommand input)
+    public async Task<T> GetAsync<T>(CommandBase input)
     {
       return await RequestAsync<T>("GET", input);
     }
 
-    public async Task<T> PostAsync<T>(ICommand input)
+    public async Task<T> PostAsync<T>(CommandBase input)
     {
       return await RequestAsync<T>("POST", input);
     }
 
-    protected async Task<T> RequestAsync<T>(string method, ICommand input)
+    protected async Task<T> RequestAsync<T>(string method, CommandBase input)
     {
       var http = new HTTP();
 
-      var url = $"https://futar.bkk.hu/api/query/v1/ws/otp/api/where/{input.Command}.json";
+      var url = $"https://futar.bkk.hu/api" + input.CommandURL;
       string responseJson = null;
       string bodyJson = string.Empty;
       var headers = new NameValueCollection();
@@ -83,19 +83,13 @@ namespace FutarWP.API
             var dto = new DateTimeOffset(DateTime.UtcNow);
             var unixTimeMilliSeconds = dto.ToUnixTimeMilliseconds().ToString();
 
-            var kvpArray = SerializeInput(input);
-            kvpArray.Add("key", _apiKey);
-            kvpArray.Add("version", _version);
-            kvpArray.Add("appVersion", _appVersion);
-            kvpArray.Add("_", unixTimeMilliSeconds.ToString());
+            var kvpArray = SerializeInput(input, input.ConcatenateStringArrays);
+            kvpArray.Add(new Tuple<string,string>("key", _apiKey));
+            kvpArray.Add(new Tuple<string,string>("version", _version));
+            kvpArray.Add(new Tuple<string,string>("appVersion", _appVersion));
+            kvpArray.Add(new Tuple<string,string>("_", unixTimeMilliSeconds.ToString()));
+            url += (kvpArray.Count > 0 ? "?" : "") + string.Join("&", kvpArray.Select(s => $"{s.Item1}={WebUtility.UrlEncode(s.Item2)}"));
 
-            var first = true;
-            foreach (var kvp in kvpArray)
-            {
-              url += first ? "?" : "&";
-              url += $"{kvp.Key}={WebUtility.UrlEncode(kvp.Value)}";
-              first = false;
-            }
             responseJson = await http.DoGETRequestAsync(url, null, headers);
           }
           break;
@@ -116,10 +110,10 @@ namespace FutarWP.API
       return responseJson != null ? Newtonsoft.Json.JsonConvert.DeserializeObject<T>(responseJson, _deserializerSettings) : default(T);
     }
 
-    private Dictionary<string,string> SerializeInput(ICommand input)
+    private List<Tuple<string,string>> SerializeInput(CommandBase input, bool concatenateStringArrays)
     {
       var inputType = input.GetType();
-      var queryString = new Dictionary<string, string>();
+      var queryString = new List<Tuple<string, string>>();
       foreach (var field in inputType.GetFields())
       {
         if (field.GetCustomAttribute(typeof(Newtonsoft.Json.JsonIgnoreAttribute)) != null)
@@ -132,11 +126,18 @@ namespace FutarWP.API
           var a = value as IEnumerable<object>;
           if (a != null)
           {
-            queryString.Add(field.Name, string.Join(",", a.Select(s => s.ToString())));
+            if (concatenateStringArrays)
+            {
+              queryString.Add(new Tuple<string, string>(field.Name, string.Join(",", a.Select(s => s.ToString()))));
+            }
+            else
+            {
+              queryString.AddRange(a.Select(s => new Tuple<string, string>(field.Name, s.ToString())));
+            }
           }
           else
           {
-            queryString.Add(field.Name, value.ToString());
+            queryString.Add(new Tuple<string, string>(field.Name, value.ToString()));
           }
         }
       }

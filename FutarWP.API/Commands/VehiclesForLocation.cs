@@ -1,8 +1,8 @@
 ﻿namespace FutarWP.API.Commands
 {
-  public class VehiclesForLocation : ICommand
+  public class VehiclesForLocation : CommandBase
   {
-    public string Command => "vehicles-for-location";
+    public override string Command => "vehicles-for-location";
 
     public double lat;
     public double latSpan;

@@ -2,9 +2,9 @@
 
 namespace FutarWP.API.Commands
 {
-  public class ArrivalsAndDeparturesForStop : ICommand
+  public class ArrivalsAndDeparturesForStop : CommandBase
   {
-    public string Command => "arrivals-and-departures-for-stop";
+    public override string Command => "arrivals-and-departures-for-stop";
 
     public List<string> includeReferences;
     public string stopId;

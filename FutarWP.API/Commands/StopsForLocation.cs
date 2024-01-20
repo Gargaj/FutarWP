@@ -1,8 +1,8 @@
 ﻿namespace FutarWP.API.Commands
 {
-  public class StopsForLocation : ICommand
+  public class StopsForLocation : CommandBase
   {
-    public string Command => "stops-for-location";
+    public override string Command => "stops-for-location";
 
     public double lat;
     public double latSpan;
