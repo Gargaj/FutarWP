@@ -16,7 +16,7 @@ namespace FutarWP.Pages
   public partial class MainPage : Page, INotifyPropertyChanged
   {
     private readonly float VehicleMinZoomLevel = 16.0f;
-    private readonly float StopsMinZoomLevel = 12.0f;
+    private readonly float StopsMinZoomLevel = 14.0f;
 
     public static readonly int ZIdxRouteLine = 10;
     public static readonly int ZIdxStops = 20;
@@ -29,12 +29,10 @@ namespace FutarWP.Pages
     private Geolocator _geolocator = null;
     private bool _mapReady = false;
     private bool _mapReset = false;
-    private DispatcherTimer _vehicleUpdateTimer = new DispatcherTimer();
+    private RequestManager _vehicleUpdate = new RequestManager(RequestManager.Strategy.Continuous);
+    private RequestManager _stopUpdate = new RequestManager(RequestManager.Strategy.Throttled);
     private Dictionary<string, MapIcon> _vehicleIcons = new Dictionary<string, MapIcon>();
     private Dictionary<string, MapIcon> _stopIcons = new Dictionary<string, MapIcon>();
-    private int _updateRunning = 0; // Atomic check
-    private System.Diagnostics.Stopwatch _vehicleUpdateStopwatch = new System.Diagnostics.Stopwatch();
-    private System.Diagnostics.Stopwatch _stopUpdateStopwatch = new System.Diagnostics.Stopwatch();
 
     public enum Panes
     {
@@ -49,8 +47,10 @@ namespace FutarWP.Pages
       _app = (App)Application.Current;
       DataContext = this;
 
-      _vehicleUpdateTimer.Interval = TimeSpan.FromSeconds(10);
-      _vehicleUpdateTimer.Tick += _vehicleUpdateTimer_Tick;
+      _vehicleUpdate.Tick += _vehicleUpdate_Tick;
+      _vehicleUpdate.PeriodicInterval = TimeSpan.FromSeconds(10);
+      _stopUpdate.Tick += _stopUpdate_Tick;
+      _stopUpdate.PeriodicInterval = TimeSpan.FromSeconds(10);
 
       map.MapServiceToken = BingCredentials.BingAPIMapKey;
       map.MapElementClick += Map_MapElementClick;
@@ -146,45 +146,28 @@ namespace FutarWP.Pages
       OnPropertyChanged(nameof(StopPaneHeight));
     }
 
-    private async void _vehicleUpdateTimer_Tick(object sender, object e)
+    private void Map_ZoomLevelChanged(MapControl sender, object args)
     {
-      await RequestVehicleUpdate();
+      _vehicleUpdate.Request();
+      _stopUpdate.Request();
     }
 
-    private async void Map_ZoomLevelChanged(MapControl sender, object args)
+    private void Map_CenterChanged(MapControl sender, object args)
     {
-      await RequestVehicleUpdate();
-      await RequestStopList();
+      _vehicleUpdate.Request();
+      _stopUpdate.Request();
     }
 
-    private async void Map_CenterChanged(MapControl sender, object args)
+    private async void _vehicleUpdate_Tick(object sender, object e)
     {
       await RequestVehicleUpdate();
-      await RequestStopList();
     }
 
     protected async Task RequestVehicleUpdate()
     {
-      bool outsideZoomLevel = map.ZoomLevel < VehicleMinZoomLevel;
-
-      // 5s throttling
-      if (!outsideZoomLevel && _vehicleUpdateStopwatch.IsRunning && _vehicleUpdateStopwatch.ElapsedMilliseconds < 5000)
-      {
-        return;
-      }
-
-      // Ensure only one update runs at a time
-      if (System.Threading.Interlocked.CompareExchange(ref _updateRunning, 1, 0) != 0)
-      {
-        return;
-      }
-
-      _vehicleUpdateStopwatch.Restart();
-
       if (SelectedPane == Panes.Trip)
       {
         await tripInlay.Refresh();
-        System.Threading.Interlocked.Exchange(ref _updateRunning, 0);
         return;
       }
 
@@ -194,7 +177,7 @@ namespace FutarWP.Pages
         // Don't return, we want vehicles to update too
       }
 
-      if (outsideZoomLevel)
+      if (map.ZoomLevel < VehicleMinZoomLevel)
       {
         var keys = _vehicleIcons.Keys.ToList();
         foreach (var id in keys)
@@ -202,14 +185,15 @@ namespace FutarWP.Pages
           map.MapElements.Remove(_vehicleIcons[id]);
           _vehicleIcons.Remove(id);
         }
-        _vehicleUpdateStopwatch.Reset();
-        System.Threading.Interlocked.Exchange(ref _updateRunning, 0);
         return;
       }
 
       await RefreshVehicleIcons();
+    }
 
-      System.Threading.Interlocked.Exchange(ref _updateRunning, 0);
+    private async void _stopUpdate_Tick(object sender, object e)
+    {
+      await RequestStopList();
     }
 
     private async Task RequestStopList()
@@ -219,18 +203,10 @@ namespace FutarWP.Pages
         return;
       }
 
-      bool outsideZoomLevel = map.ZoomLevel < StopsMinZoomLevel;
-      if (outsideZoomLevel)
+      if (map.ZoomLevel < StopsMinZoomLevel)
       {
         return;
       }
-
-      if ( _stopUpdateStopwatch.IsRunning && _stopUpdateStopwatch.ElapsedMilliseconds < 5000)
-      {
-        return;
-      }
-
-      _stopUpdateStopwatch.Restart();
 
       Geopoint topLeft, bottomRight;
       try
@@ -367,39 +343,54 @@ namespace FutarWP.Pages
       });
       return icon;
     }
+
     protected async override void OnNavigatedTo(NavigationEventArgs e)
     {
       base.OnNavigatedTo(e);
 
-      if (!await _app.Client.ScrapeCredentials())
+      try
+      {
+        if (!await _app.Client.ScrapeCredentials())
+        {
+          var dialog = new ContentDialog
+          {
+            Content = new TextBlock { Text = "Failed to scrape API keys!", TextWrapping = TextWrapping.WrapWholeWords },
+            Title = $"Error",
+            IsSecondaryButtonEnabled = false,
+            PrimaryButtonText = "Ok"
+          };
+          await dialog.ShowAsync();
+          return;
+        }
+
+        var response = await _app.Client.GetAsync<API.Response<API.Commands.MetadataEntry>>(new API.Commands.Metadata());
+        var entry = response?.data?.entry;
+        if (entry != null)
+        {
+          var bb = new GeoboundingBox(new BasicGeoposition()
+          {
+            Latitude = entry.upperRightLatitude,
+            Longitude = entry.lowerLeftLongitude,
+          }, new BasicGeoposition()
+          {
+            Latitude = entry.lowerLeftLatitude,
+            Longitude = entry.upperRightLongitude,
+          });
+          await map.TrySetViewBoundsAsync(bb, null, MapAnimationKind.None);
+          _mapReady = true;
+        }
+      }
+      catch (Exception ex)
       {
         var dialog = new ContentDialog
         {
-          Content = new TextBlock { Text = "Failed to scrape API keys!", TextWrapping = TextWrapping.WrapWholeWords },
-          Title = $"Error",
+          Content = new TextBlock { Text = ex.ToString(), TextWrapping = TextWrapping.WrapWholeWords },
+          Title = "Exception",
           IsSecondaryButtonEnabled = false,
           PrimaryButtonText = "Ok"
         };
         await dialog.ShowAsync();
         return;
-      }
-
-      _vehicleUpdateTimer.Start();
-
-      var response = await _app.Client.GetAsync<API.Response<API.Commands.MetadataEntry>>(new API.Commands.Metadata());
-      var entry = response?.data?.entry;
-      if (entry != null)
-      {
-        var bb = new GeoboundingBox(new BasicGeoposition() {
-          Latitude = entry.upperRightLatitude,
-          Longitude = entry.lowerLeftLongitude,
-        }, new BasicGeoposition()
-        {
-          Latitude = entry.lowerLeftLatitude,
-          Longitude = entry.upperRightLongitude,
-        });
-        await map.TrySetViewBoundsAsync(bb, null, MapAnimationKind.None);
-        _mapReady = true;
       }
 
       await Dispatcher.RunAsync(Windows.UI.Core.CoreDispatcherPriority.Normal, async () =>
@@ -414,6 +405,14 @@ namespace FutarWP.Pages
           map.MapElements.Add(_mapIcon);
         }
       });
+    }
+
+    protected override void OnNavigatedFrom(NavigationEventArgs e)
+    {
+      base.OnNavigatedFrom(e);
+
+      _vehicleUpdate.Stop();
+      _stopUpdate.Stop();
     }
 
     private async void Geolocator_PositionChanged(Geolocator sender, PositionChangedEventArgs args)

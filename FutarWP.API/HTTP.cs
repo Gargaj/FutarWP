@@ -17,56 +17,6 @@ namespace FutarWP.API
     {
       var httpClient = new System.Net.Http.HttpClient();
 
-      /*
-      httpWebRequest.Method = method;
-      if (method == "POST" && data != null)
-      {
-        httpWebRequest.ContentType = "application/x-www-form-urlencoded";
-        //_httpWReq.ContentLength = data.Length;
-      }
-
-      if (headers != null)
-      {
-        if (headers["Content-Type"] != null)
-        {
-          httpWebRequest.ContentType = headers["Content-Type"];
-          headers.Remove("Content-Type");
-        }
-        //         if (headers["User-Agent"] != null)
-        //         {
-        //           _httpWReq.UserAgent = headers["User-Agent"];
-        //           headers.Remove("User-Agent");
-        //         }
-        if (headers["Accept"] != null)
-        {
-          httpWebRequest.Accept = headers["Accept"];
-          headers.Remove("Accept");
-        }
-        //         if (headers["Referer"] != null)
-        //         {
-        //           _httpWReq.Referer = headers["Referer"];
-        //           headers.Remove("Referer");
-        //         }
-        foreach (var key in headers.AllKeys)
-        {
-          httpWebRequest.Headers[key] = headers[key];
-        }
-      }
-      httpWebRequest.CookieContainer = _cookieContainer;
-      httpWebRequest.Timeout = 1000;
-
-      if (method == "POST")
-      {
-        using (var stream = await httpWebRequest.GetRequestStreamAsync())
-        {
-          await stream.WriteAsync(data, 0, data.Length);
-        }
-      }
-
-      // May throw exception
-      var response = (HttpWebResponse)await httpWebRequest.GetResponseAsync();
-      */
-
       httpClient.Timeout = TimeSpan.FromSeconds(5);
       System.Net.Http.HttpResponseMessage response = null;
       try
