@@ -17,15 +17,17 @@
     <Grid Grid.Row="0">
       <Grid.ColumnDefinitions>
         <ColumnDefinition Width="*"/>
+        <!--ColumnDefinition Width="48"/-->
         <ColumnDefinition Width="32"/>
       </Grid.ColumnDefinitions>
       <TextBox x:Name="searchField" Grid.Column="0" InputScope="Search" PlaceholderText="Enter search term..." KeyDown="SearchField_KeyDown"/>
+      <!--
       <Button Grid.Column="1" Click="SearchButton_Click" HorizontalAlignment="Center">
-        <Button.Template>
-          <ControlTemplate>
-            <FontIcon Glyph="&#xE721;"/>
-          </ControlTemplate>
-        </Button.Template>
+        <FontIcon Glyph="&#xE721;"/>
+      </Button>
+      -->
+      <Button Grid.Column="1" Click="ClosePane_Click" Background="Transparent">
+        <FontIcon Glyph="&#xE711;" FontSize="12"/>
       </Button>
     </Grid>
 

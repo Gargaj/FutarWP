@@ -50,6 +50,11 @@ namespace FutarWP.Inlays
       await PerformSearch();
     }
 
+    private void ClosePane_Click(object sender, RoutedEventArgs e)
+    {
+      _mainPage?.ClosePane();
+    }
+
     private async Task PerformSearch()
     {
       Geopoint topLeft, bottomRight;
