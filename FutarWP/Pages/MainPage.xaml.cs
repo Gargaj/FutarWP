@@ -73,6 +73,7 @@ namespace FutarWP.Pages
       {
         if (_selectedPane != value)
         {
+          searchInlay.Flush();
           stopInlay.Flush();
           tripInlay.Flush();
         }

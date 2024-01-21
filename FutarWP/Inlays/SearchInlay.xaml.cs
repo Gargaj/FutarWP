@@ -34,6 +34,13 @@ namespace FutarWP.Inlays
 
     public ObservableCollection<Result> Results { get; set; }
 
+    public void Flush()
+    {
+      searchField.Text = string.Empty;
+      Results.Clear();
+      OnPropertyChanged(nameof(Results));
+    }
+
     private async void SearchField_KeyDown(object sender, Windows.UI.Xaml.Input.KeyRoutedEventArgs e)
     {
       if (e.Key == Windows.System.VirtualKey.Enter)
