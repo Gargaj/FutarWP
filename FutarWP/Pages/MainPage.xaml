@@ -15,11 +15,19 @@
   <Grid>
     <Grid.RowDefinitions>
       <RowDefinition Height="{Binding MapHeight}"/>
-      <RowDefinition Height="{Binding TripPaneHeight}"/>
-      <RowDefinition Height="{Binding StopPaneHeight}"/>
+      <RowDefinition Height="{Binding PaneHeight}"/>
+      <RowDefinition Height="Auto"/>
     </Grid.RowDefinitions>
     <Maps:MapControl Grid.Row="0" x:Name="map" TransitFeaturesVisible="False"/>
-    <inlays:TripInlay Grid.Row="1" x:Name="tripInlay"/>
-    <inlays:StopInlay Grid.Row="2" x:Name="stopInlay"/>
+    <Grid Grid.Row="1">
+      <inlays:TripInlay x:Name="tripInlay"/>
+      <inlays:StopInlay x:Name="stopInlay"/>
+    </Grid>
+    <!--
+    <CommandBar Grid.Row="2" ClosedDisplayMode="Minimal">
+      <AppBarButton Icon="Directions" Label="Directions" ToolTipService.ToolTip="Directions" Click="Directions_Click"/>
+      <AppBarButton Icon="Find" Label="Search" ToolTipService.ToolTip="Search" Click="Search_Click"/>
+    </CommandBar>
+    -->
   </Grid>
 </Page>

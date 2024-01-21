@@ -33,6 +33,7 @@ namespace FutarWP.Pages
     private RequestManager _stopUpdate = new RequestManager(RequestManager.Strategy.Throttled);
     private Dictionary<string, MapIcon> _vehicleIcons = new Dictionary<string, MapIcon>();
     private Dictionary<string, MapIcon> _stopIcons = new Dictionary<string, MapIcon>();
+    private Panes _selectedPane = Panes.None;
 
     public enum Panes
     {
@@ -63,9 +64,19 @@ namespace FutarWP.Pages
     }
 
     public string MapHeight => SelectedPane == Panes.None ? "*" : "0.5*";
-    public string TripPaneHeight => SelectedPane == Panes.Trip ? "0.5*" : "0";
-    public string StopPaneHeight => SelectedPane == Panes.Stop ? "0.5*" : "0";
-    public Panes SelectedPane { get; set; } = Panes.None;
+    public string PaneHeight => SelectedPane != Panes.None ? "0.5*" : "0";
+    public Panes SelectedPane
+    {
+      get => _selectedPane;
+      set
+      {
+        _selectedPane = value;
+        tripInlay.Visibility = _selectedPane == Panes.Trip ? Visibility.Visible : Visibility.Collapsed;
+        stopInlay.Visibility = _selectedPane == Panes.Stop ? Visibility.Visible : Visibility.Collapsed;
+        OnPropertyChanged(nameof(MapHeight));
+        OnPropertyChanged(nameof(PaneHeight));
+      }
+    }
     public MapControl Map => map;
 
     private async void Map_MapElementClick(MapControl sender, MapElementClickEventArgs args)
@@ -103,9 +114,6 @@ namespace FutarWP.Pages
       }
 
       SelectedPane = Panes.Trip;
-      OnPropertyChanged(nameof(MapHeight));
-      OnPropertyChanged(nameof(TripPaneHeight));
-      OnPropertyChanged(nameof(StopPaneHeight));
 
       //vehicleKVP.Value.MapStyleSheetEntry = "selected";
       await tripInlay.Refresh();
@@ -123,9 +131,6 @@ namespace FutarWP.Pages
       }
 
       SelectedPane = Panes.Stop;
-      OnPropertyChanged(nameof(MapHeight));
-      OnPropertyChanged(nameof(TripPaneHeight));
-      OnPropertyChanged(nameof(StopPaneHeight));
 
       //vehicleKVP.Value.MapStyleSheetEntry = "selected";
       await stopInlay.Refresh();
@@ -139,11 +144,16 @@ namespace FutarWP.Pages
 
       stopInlay.Flush();
       stopInlay.StopID = string.Empty;
-      
+
       SelectedPane = Panes.None;
-      OnPropertyChanged(nameof(MapHeight));
-      OnPropertyChanged(nameof(TripPaneHeight));
-      OnPropertyChanged(nameof(StopPaneHeight));
+    }
+
+    private void Search_Click(object sender, RoutedEventArgs e)
+    {
+    }
+
+    private void Directions_Click(object sender, RoutedEventArgs e)
+    {
     }
 
     private void Map_ZoomLevelChanged(MapControl sender, object args)
