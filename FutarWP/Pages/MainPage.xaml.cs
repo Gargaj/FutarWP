@@ -40,6 +40,7 @@ namespace FutarWP.Pages
       None,
       Trip,
       Stop,
+      Search,
     }
 
     public MainPage()
@@ -70,9 +71,15 @@ namespace FutarWP.Pages
       get => _selectedPane;
       set
       {
+        if (_selectedPane != value)
+        {
+          stopInlay.Flush();
+          tripInlay.Flush();
+        }
         _selectedPane = value;
         tripInlay.Visibility = _selectedPane == Panes.Trip ? Visibility.Visible : Visibility.Collapsed;
         stopInlay.Visibility = _selectedPane == Panes.Stop ? Visibility.Visible : Visibility.Collapsed;
+        searchInlay.Visibility = _selectedPane == Panes.Search ? Visibility.Visible : Visibility.Collapsed;
         OnPropertyChanged(nameof(MapHeight));
         OnPropertyChanged(nameof(PaneHeight));
       }
@@ -98,14 +105,12 @@ namespace FutarWP.Pages
       {
         await SelectStop(stopKVP.Key);
       }
-
     }
 
     public async Task SelectTrip(string tripID)
     {
-      stopInlay.Flush();
+      SelectedPane = Panes.Trip;
 
-      tripInlay.Flush();
       tripInlay.TripID = tripID;
       if (_vehicleIcons.ContainsKey(tripID))
       {
@@ -113,24 +118,19 @@ namespace FutarWP.Pages
         map.Center = tripInlay.MapElement.Location;
       }
 
-      SelectedPane = Panes.Trip;
-
       //vehicleKVP.Value.MapStyleSheetEntry = "selected";
       await tripInlay.Refresh();
     }
 
     public async Task SelectStop(string stopID)
     {
-      tripInlay.Flush();
+      SelectedPane = Panes.Stop;
 
-      stopInlay.Flush();
       stopInlay.StopID = stopID;
       if (_stopIcons.ContainsKey(stopID))
       {
         map.Center = _stopIcons[stopID].Location;
       }
-
-      SelectedPane = Panes.Stop;
 
       //vehicleKVP.Value.MapStyleSheetEntry = "selected";
       await stopInlay.Refresh();
@@ -150,6 +150,7 @@ namespace FutarWP.Pages
 
     private void Search_Click(object sender, RoutedEventArgs e)
     {
+      SelectedPane = Panes.Search;
     }
 
     private void Directions_Click(object sender, RoutedEventArgs e)

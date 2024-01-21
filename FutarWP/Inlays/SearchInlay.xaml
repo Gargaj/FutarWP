@@ -1,0 +1,59 @@
+﻿<UserControl
+    x:Class="FutarWP.Inlays.SearchInlay"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:local="using:FutarWP.Inlays"
+    xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+    xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+    mc:Ignorable="d"
+    d:DesignHeight="300"
+    d:DesignWidth="400">
+
+  <Grid>
+    <Grid.RowDefinitions>
+      <RowDefinition Height="32"/>
+      <RowDefinition Height="*"/>
+    </Grid.RowDefinitions>
+    <Grid Grid.Row="0">
+      <Grid.ColumnDefinitions>
+        <ColumnDefinition Width="*"/>
+        <ColumnDefinition Width="32"/>
+      </Grid.ColumnDefinitions>
+      <TextBox x:Name="searchField" Grid.Column="0" InputScope="Search" PlaceholderText="Enter search term..." KeyDown="SearchField_KeyDown"/>
+      <Button Grid.Column="1" Click="SearchButton_Click" HorizontalAlignment="Center">
+        <Button.Template>
+          <ControlTemplate>
+            <FontIcon Glyph="&#xE721;"/>
+          </ControlTemplate>
+        </Button.Template>
+      </Button>
+    </Grid>
+
+    <ListView Grid.Row="1" Grid.ColumnSpan="2" ItemsSource="{Binding Results}">
+      <ListView.ItemContainerStyle>
+        <Style TargetType="ListViewItem">
+          <Setter Property="Margin" Value="0"/>
+          <Setter Property="Padding" Value="0"/>
+          <Setter Property="HorizontalContentAlignment" Value="Stretch"/>
+          <Setter Property="MinHeight" Value="0"/>
+        </Style>
+      </ListView.ItemContainerStyle>
+      <ListView.ItemTemplate>
+        <DataTemplate>
+          <Button Click="SearchResult_Click">
+            <Button.Template>
+              <ControlTemplate>
+                <StackPanel Orientation="Horizontal" Padding="5,5,5,5">
+                  <FontIcon Glyph="{Binding IconGlyph}" Margin="0,0,5,0"/>
+                  <TextBlock Text="{Binding Name}"/>
+                  <TextBlock Text="{Binding Subtitle}" Opacity="0.5" FontSize="11" Margin="5,4,0,0"/>
+                </StackPanel>
+              </ControlTemplate>
+            </Button.Template>
+          </Button>
+        </DataTemplate>
+      </ListView.ItemTemplate>
+    </ListView>
+
+  </Grid>
+</UserControl>
