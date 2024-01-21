@@ -124,6 +124,7 @@
     <Compile Include="Commands\ArrivalsAndDeparturesForStop.cs" />
     <Compile Include="Commands\Geocode.cs" />
     <Compile Include="Commands\Metadata.cs" />
+    <Compile Include="Commands\PlanTrip.cs" />
     <Compile Include="Commands\TripDetails.cs" />
     <Compile Include="Helpers.cs" />
     <Compile Include="Types\Agency.cs" />
