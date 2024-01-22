@@ -419,8 +419,9 @@ namespace FutarWP.Pages
         var accessStatus = await Geolocator.RequestAccessAsync();
         if (accessStatus == GeolocationAccessStatus.Allowed)
         {
-          _geolocator = new Geolocator();
+          _geolocator = new Geolocator() { DesiredAccuracyInMeters = 10, DesiredAccuracy = PositionAccuracy.High };
           _geolocator.PositionChanged += Geolocator_PositionChanged;
+          _geolocator.StatusChanged += Geolocator_StatusChanged;
 
           _locationIcon.Image = RandomAccessStreamReference.CreateFromUri(new Uri("ms-appx:///Assets/Icons/Location.png"));
           _locationIcon.ZIndex = ZIdxLocation;
@@ -435,6 +436,14 @@ namespace FutarWP.Pages
 
       _vehicleUpdate.Stop();
       _stopUpdate.Stop();
+    }
+
+    private async void Geolocator_StatusChanged(Geolocator sender, StatusChangedEventArgs args)
+    {
+      await Dispatcher.RunAsync(Windows.UI.Core.CoreDispatcherPriority.Normal, () =>
+      {
+        _locationIcon.Visible = args.Status == PositionStatus.Ready;
+      });
     }
 
     private async void Geolocator_PositionChanged(Geolocator sender, PositionChangedEventArgs args)
