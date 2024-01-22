@@ -14,5 +14,6 @@
     <SplashScreenSource>D:\code\FutarWP\unnamed.png</SplashScreenSource>
     <PackageLogoSource>D:\code\FutarWP\unnamed.png</PackageLogoSource>
     <BadgeLogoSource>D:\code\FutarWP\unnamed.png</BadgeLogoSource>
+    <ProjectView>ProjectFiles</ProjectView>
   </PropertyGroup>
 </Project>

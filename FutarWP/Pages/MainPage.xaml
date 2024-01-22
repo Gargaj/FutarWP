@@ -18,7 +18,7 @@
       <RowDefinition Height="{Binding PaneHeight}"/>
       <RowDefinition Height="Auto"/>
     </Grid.RowDefinitions>
-    <Maps:MapControl Grid.Row="0" x:Name="map" TransitFeaturesVisible="False"/>
+    <Maps:MapControl Grid.Row="0" x:Name="map" TransitFeaturesVisible="False" Style="Road"/>
     <Grid Grid.Row="1">
       <inlays:TripInlay x:Name="tripInlay"/>
       <inlays:StopInlay x:Name="stopInlay"/>

@@ -5,10 +5,13 @@ using System.Linq;
 using System.Threading.Tasks;
 using Windows.Devices.Geolocation;
 using Windows.Foundation;
+using Windows.Graphics.Imaging;
 using Windows.Storage.Streams;
 using Windows.UI.Xaml;
 using Windows.UI.Xaml.Controls;
 using Windows.UI.Xaml.Controls.Maps;
+using Windows.UI.Xaml.Media;
+using Windows.UI.Xaml.Media.Imaging;
 using Windows.UI.Xaml.Navigation;
 
 namespace FutarWP.Pages
@@ -330,6 +333,7 @@ namespace FutarWP.Pages
         }
       }
     }
+
     public MapIcon UpdateVehicleIconFromRecord(API.Types.Vehicle vehicle)
     {
       MapIcon icon = null;
@@ -418,6 +422,7 @@ namespace FutarWP.Pages
           _geolocator = new Geolocator();
           _geolocator.PositionChanged += Geolocator_PositionChanged;
 
+          _locationIcon.Image = RandomAccessStreamReference.CreateFromUri(new Uri("ms-appx:///Assets/Icons/Location.png"));
           _locationIcon.ZIndex = ZIdxLocation;
           map.MapElements.Add(_locationIcon);
         }
