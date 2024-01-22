@@ -18,6 +18,18 @@ namespace FutarWP.API
       return dateTime;
     }
 
+    public static DateTime UnixTimeStampMillisecondsToDateTime(ulong unixTimeStampMillisec)
+    {
+      // Unix timestamp is seconds past epoch
+      if (unixTimeStampMillisec == 0)
+      {
+        return new DateTime();
+      }
+      DateTime dateTime = new DateTime(1970, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc);
+      dateTime = dateTime.AddMilliseconds(unixTimeStampMillisec).ToLocalTime();
+      return dateTime;
+    }
+
     public static List<BasicGeoposition> DecodePolylineString(string str)
     {
       var output = new List<BasicGeoposition>();

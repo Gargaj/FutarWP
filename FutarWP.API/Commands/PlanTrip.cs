@@ -80,8 +80,8 @@ namespace FutarWP.API.Commands
     {
       public ulong startTime;
       public ulong endTime;
-      public uint departureDelay;
-      public uint arrivalDelay;
+      public int departureDelay;
+      public int arrivalDelay;
       public bool realTime;
       public float distance;
       public bool pathway;

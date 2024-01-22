@@ -7,7 +7,7 @@ using Windows.UI.Xaml.Navigation;
 
 namespace FutarWP
 {
-  sealed partial class App : Application
+  public partial class App : Application
   {
     private API.Client _client = new API.Client();
     private Frame _rootFrame;

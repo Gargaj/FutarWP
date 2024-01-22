@@ -24,7 +24,7 @@ namespace FutarWP.Inlays
       Loaded += SearchInlay_Loaded;
       DataContext = this;
 
-      Results = new ObservableCollection<Result>();
+      Results = new ObservableCollection<SearchResult>();
     }
 
     private void SearchInlay_Loaded(object sender, RoutedEventArgs e)
@@ -32,7 +32,7 @@ namespace FutarWP.Inlays
       _mainPage = _app.GetCurrentFrame<Pages.MainPage>();
     }
 
-    public ObservableCollection<Result> Results { get; set; }
+    public ObservableCollection<SearchResult> Results { get; set; }
 
     public void Flush()
     {
@@ -62,23 +62,26 @@ namespace FutarWP.Inlays
       _mainPage?.ClosePane();
     }
 
-    private async Task PerformSearch()
+    public static async Task<List<SearchResult>> Search( App app, string q )
     {
+      var results = new List<SearchResult>();
+
       Geopoint topLeft, bottomRight;
       try
       {
-        _mainPage.Map.GetLocationFromOffset(new Point(0, 0), out topLeft);
-        _mainPage.Map.GetLocationFromOffset(new Point(_mainPage.Map.ActualWidth, _mainPage.Map.ActualHeight), out bottomRight);
+        var mainPage = app.GetCurrentFrame<Pages.MainPage>();
+        mainPage.Map.GetLocationFromOffset(new Point(0, 0), out topLeft);
+        mainPage.Map.GetLocationFromOffset(new Point(mainPage.Map.ActualWidth, mainPage.Map.ActualHeight), out bottomRight);
       }
       catch (Exception)
       {
         // No idea why this happens
-        return;
+        return results;
       }
 
-      var response = await _app.Client.GetAsync<API.Response<API.Commands.GeocodeEntry>>(new API.Commands.Geocode()
+      var response = await app.Client.GetAsync<API.Response<API.Commands.GeocodeEntry>>(new API.Commands.Geocode()
       {
-        q = searchField.Text,
+        q = q,
         west = topLeft.Position.Longitude,
         north = topLeft.Position.Latitude,
         east = bottomRight.Position.Longitude,
@@ -86,19 +89,17 @@ namespace FutarWP.Inlays
         types = new List<string>() { "stops", "alerts", "routes", "places" },
       });
 
-      Results.Clear();
       var entry = response?.data?.entry;
       if (entry == null)
       {
-        return;
+        return results;
       }
 
-      var resultsUnsorted = new List<Result>();
       if (entry.places.otp != null)
       {
         foreach (var place in entry.places.otp)
         {
-          resultsUnsorted.Add(new Result()
+          results.Add(new SearchResult()
           {
             Name = place.mainTitle,
             IconGlyph = "\xE806",
@@ -113,7 +114,7 @@ namespace FutarWP.Inlays
       {
         foreach (var place in entry.places.osm)
         {
-          resultsUnsorted.Add(new Result()
+          results.Add(new SearchResult()
           {
             Name = place.mainTitle,
             IconGlyph = "\xE707",
@@ -124,14 +125,20 @@ namespace FutarWP.Inlays
           });
         }
       }
-      Results = new ObservableCollection<Result>(resultsUnsorted.OrderBy(s => -s.Score));
+      return results.OrderBy(s => -s.Score).ToList();
+    }
+
+    private async Task PerformSearch()
+    {
+      var results = await Search(_app, searchField.Text);
+      Results = new ObservableCollection<SearchResult>(results);
       OnPropertyChanged(nameof(Results));
     }
 
     private void SearchResult_Click(object sender, RoutedEventArgs e)
     {
       var button = sender as Button;
-      var dataContext = button.DataContext as Result;
+      var dataContext = button.DataContext as SearchResult;
       if (dataContext != null)
       {
         _mainPage.Map.ZoomLevel = 17.0f;
@@ -142,7 +149,7 @@ namespace FutarWP.Inlays
       }
     }
 
-    public class Result
+    public class SearchResult
     {
       public string IconGlyph { get; set; }
       public string Name { get; set; }

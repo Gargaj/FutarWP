@@ -1,0 +1,152 @@
+﻿<UserControl
+    x:Class="FutarWP.Inlays.PlanTripInlay"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:local="using:FutarWP.Inlays"
+    xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+    xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+    mc:Ignorable="d"
+    d:DesignHeight="300"
+    d:DesignWidth="400">
+
+  <Grid>
+    <Grid>
+      <Grid.RowDefinitions>
+        <RowDefinition Height="96"/>
+        <RowDefinition Height="*"/>
+      </Grid.RowDefinitions>
+      <Grid Grid.Row="0">
+        <Grid.ColumnDefinitions>
+          <ColumnDefinition Width="*"/>
+          <!--ColumnDefinition Width="48"/-->
+          <ColumnDefinition Width="32"/>
+        </Grid.ColumnDefinitions>
+        <Grid Grid.Column="0">
+          <Grid.RowDefinitions>
+            <RowDefinition Height="32"/>
+            <RowDefinition Height="32"/>
+            <RowDefinition Height="32"/>
+          </Grid.RowDefinitions>
+          <Grid.ColumnDefinitions>
+            <ColumnDefinition Width="48"/>
+            <ColumnDefinition Width="32"/>
+            <ColumnDefinition Width="*"/>
+            <ColumnDefinition Width="48"/>
+          </Grid.ColumnDefinitions>
+        
+          <!-- FROM -->
+          <FontIcon Grid.Row="0" Grid.Column="0" Glyph="&#xEB49;" Margin="0,0,5,0"/>
+          <Button Grid.Row="0" Grid.Column="1" Click="FromLocation_Click" HorizontalAlignment="Stretch" Background="Transparent" Padding="0">
+            <FontIcon Glyph="&#xE81D;" Margin="0,0,5,0"/>
+          </Button>
+          <AutoSuggestBox Grid.Row="0" Grid.Column="2" Grid.ColumnSpan="2" x:Name="fromField" PlaceholderText="From..." TextChanged="AutoSuggestTextChanged" SuggestionChosen="AutoSuggestSuggestionChosen">
+            <AutoSuggestBox.ItemTemplate>
+              <DataTemplate>
+                <StackPanel Orientation="Horizontal">
+                  <FontIcon Glyph="{Binding IconGlyph}" Margin="0,0,5,0"/>
+                  <TextBlock Text="{Binding Name}"/>
+                  <TextBlock Text="{Binding Subtitle}" Opacity="0.5" FontSize="11" Margin="5,4,0,0"/>
+                </StackPanel>
+              </DataTemplate>
+            </AutoSuggestBox.ItemTemplate>
+          </AutoSuggestBox>
+
+          <!-- TO -->
+          <FontIcon Grid.Row="1" Grid.Column="0" Glyph="&#xEB4B;" Margin="0,0,5,0"/>
+          <Button Grid.Row="1" Grid.Column="1" Click="ToLocation_Click" HorizontalAlignment="Stretch" Background="Transparent" Padding="0">
+            <FontIcon Glyph="&#xE81D;" Margin="0,0,5,0"/>
+          </Button>
+          <AutoSuggestBox Grid.Row="1" Grid.Column="2" Grid.ColumnSpan="2" x:Name="toField" PlaceholderText="To..." TextChanged="AutoSuggestTextChanged" SuggestionChosen="AutoSuggestSuggestionChosen">
+            <AutoSuggestBox.ItemTemplate>
+              <DataTemplate>
+                <StackPanel Orientation="Horizontal">
+                  <FontIcon Glyph="{Binding IconGlyph}" Margin="0,0,5,0"/>
+                  <TextBlock Text="{Binding Name}"/>
+                  <TextBlock Text="{Binding Subtitle}" Opacity="0.5" FontSize="11" Margin="5,4,0,0"/>
+                </StackPanel>
+              </DataTemplate>
+            </AutoSuggestBox.ItemTemplate>
+          </AutoSuggestBox>
+
+          <!-- TIMING -->
+          <StackPanel Grid.Row="2" Grid.Column="0" Grid.ColumnSpan="3" Orientation="Horizontal">
+            <ComboBox>
+              <ComboBoxItem>Now</ComboBoxItem>
+              <ComboBoxItem>Depart at</ComboBoxItem>
+              <ComboBoxItem>Arrive by</ComboBoxItem>
+            </ComboBox>
+            <CalendarDatePicker Date="{Binding PlanDate}" DateFormat="{}{dayofweek.abbreviated}‎, ‎{month.abbreviated}‎ ‎{day.integer}‎, ‎{year.full}"/>
+            <TimePicker Time="{Binding PlanTime}" MinWidth="10" ClockIdentifier="24HourClock"/>
+          </StackPanel>
+          <Button Grid.Row="2" Grid.Column="4" Click="SearchButton_Click" HorizontalAlignment="Stretch">
+            <FontIcon Glyph="&#xE721;"/>
+          </Button>
+        </Grid>
+        <Button Grid.Column="1" Click="ClosePane_Click" Background="Transparent" VerticalAlignment="Top">
+          <FontIcon Glyph="&#xE711;" FontSize="12"/>
+        </Button>
+      </Grid>
+
+      <ProgressRing Grid.Row="1" Grid.ColumnSpan="2" Width="64" Height="64" HorizontalAlignment="Center" IsActive="{Binding IsLoading}"/>
+      <ListView Grid.Row="1" Grid.ColumnSpan="2" ItemsSource="{Binding ResultItineraries}">
+        <ListView.ItemContainerStyle>
+          <Style TargetType="ListViewItem">
+            <Setter Property="Margin" Value="0"/>
+            <Setter Property="Padding" Value="0"/>
+            <Setter Property="HorizontalContentAlignment" Value="Stretch"/>
+            <Setter Property="MinHeight" Value="0"/>
+          </Style>
+        </ListView.ItemContainerStyle>
+        <ListView.ItemTemplate>
+          <DataTemplate>
+            <Button Click="PlanResult_Click" HorizontalAlignment="Stretch">
+              <Button.Template>
+                <ControlTemplate>
+
+                  <Grid Padding="5">
+                    <Grid.RowDefinitions>
+                      <RowDefinition Height="20"/>
+                      <RowDefinition Height="*"/>
+                    </Grid.RowDefinitions>
+                    <TextBlock Grid.Row="0">
+                      <Run Text="{Binding StartTimeString}"/>
+                      <Run Text="-"/>
+                      <Run Text="{Binding EndTimeString}"/>
+                      <Run Text="("/><Run Text="{Binding DurationInMinutes}"/>
+                      <Run Text="minutes)"/>
+                    </TextBlock>
+                    <ListView Grid.Row="1" ItemsSource="{Binding Legs}">
+                      <ListView.ItemContainerStyle>
+                        <Style TargetType="ListViewItem">
+                          <Setter Property="Margin" Value="0"/>
+                          <Setter Property="Padding" Value="0"/>
+                          <Setter Property="HorizontalContentAlignment" Value="Stretch"/>
+                          <Setter Property="MinWidth" Value="0"/>
+                          <Setter Property="MinHeight" Value="0"/>
+                        </Style>
+                      </ListView.ItemContainerStyle>
+                      <ListView.ItemsPanel>
+                        <ItemsPanelTemplate>
+                          <StackPanel Orientation="Horizontal"/>
+                        </ItemsPanelTemplate>
+                      </ListView.ItemsPanel>
+                      <ListView.ItemTemplate>
+                        <DataTemplate>
+                          <Border MinWidth="50" Padding="8,2,8,2" Margin="0,0,5,0" Background="{Binding BackColor}">
+                            <TextBlock TextAlignment="Center" FontWeight="Bold" Foreground="{Binding ForeColor}" Text="{Binding Text}"/>
+                          </Border>
+                        </DataTemplate>
+                      </ListView.ItemTemplate>
+                    </ListView>
+                  </Grid>
+
+                </ControlTemplate>
+              </Button.Template>
+            </Button>
+          </DataTemplate>
+        </ListView.ItemTemplate>
+      </ListView>
+      
+    </Grid>
+  </Grid>
+</UserControl>

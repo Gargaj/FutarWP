@@ -23,9 +23,8 @@ namespace FutarWP.Pages
     public static readonly int ZIdxVehicles = 30;
     public static readonly int ZIdxLocation = 40;
 
-    private string _mapToken = string.Empty;
     private App _app;
-    private MapIcon _mapIcon = new MapIcon();
+    private MapIcon _locationIcon = new MapIcon();
     private Geolocator _geolocator = null;
     private bool _mapReady = false;
     private bool _mapReset = false;
@@ -41,6 +40,8 @@ namespace FutarWP.Pages
       Trip,
       Stop,
       Search,
+      PlanTrip,
+      TripDetail,
     }
 
     public MainPage()
@@ -74,6 +75,7 @@ namespace FutarWP.Pages
         if (_selectedPane != value)
         {
           searchInlay.Flush();
+          planTripInlay.Flush();
           stopInlay.Flush();
           tripInlay.Flush();
         }
@@ -81,11 +83,13 @@ namespace FutarWP.Pages
         tripInlay.Visibility = _selectedPane == Panes.Trip ? Visibility.Visible : Visibility.Collapsed;
         stopInlay.Visibility = _selectedPane == Panes.Stop ? Visibility.Visible : Visibility.Collapsed;
         searchInlay.Visibility = _selectedPane == Panes.Search ? Visibility.Visible : Visibility.Collapsed;
+        planTripInlay.Visibility = _selectedPane == Panes.PlanTrip ? Visibility.Visible : Visibility.Collapsed;
         OnPropertyChanged(nameof(MapHeight));
         OnPropertyChanged(nameof(PaneHeight));
       }
     }
     public MapControl Map => map;
+    public MapIcon LocationIcon => _locationIcon;
 
     private async void Map_MapElementClick(MapControl sender, MapElementClickEventArgs args)
     {
@@ -156,6 +160,7 @@ namespace FutarWP.Pages
 
     private void Directions_Click(object sender, RoutedEventArgs e)
     {
+      SelectedPane = Panes.PlanTrip;
     }
 
     private void Map_ZoomLevelChanged(MapControl sender, object args)
@@ -413,8 +418,8 @@ namespace FutarWP.Pages
           _geolocator = new Geolocator();
           _geolocator.PositionChanged += Geolocator_PositionChanged;
 
-          _mapIcon.ZIndex = ZIdxLocation;
-          map.MapElements.Add(_mapIcon);
+          _locationIcon.ZIndex = ZIdxLocation;
+          map.MapElements.Add(_locationIcon);
         }
       });
     }
@@ -437,7 +442,7 @@ namespace FutarWP.Pages
           map.ZoomLevel = 18.0f;
           _mapReset = true;
         }
-        _mapIcon.Location = new Geopoint(args.Position.Coordinate.Point.Position);
+        _locationIcon.Location = new Geopoint(args.Position.Coordinate.Point.Position);
       });
     }
 
