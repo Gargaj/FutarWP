@@ -27,7 +27,7 @@ namespace FutarWP.Pages
     public static readonly int ZIdxLocation = 40;
 
     private App _app;
-    private MapIcon _locationIcon = new MapIcon();
+    private MapIcon _locationIcon = new MapIcon() { Visible = false };
     private Geolocator _geolocator = null;
     private bool _mapReady = false;
     private bool _mapReset = false;
@@ -94,6 +94,7 @@ namespace FutarWP.Pages
     }
     public MapControl Map => map;
     public MapIcon LocationIcon => _locationIcon;
+    public bool HasLocationServices => _locationIcon?.Visible ?? false;
 
     private async void Map_MapElementClick(MapControl sender, MapElementClickEventArgs args)
     {
@@ -165,6 +166,14 @@ namespace FutarWP.Pages
     private void Directions_Click(object sender, RoutedEventArgs e)
     {
       SelectedPane = Panes.PlanTrip;
+    }
+
+    private void FindMe_Click(object sender, RoutedEventArgs e)
+    {
+      if (_locationIcon != null && _locationIcon.Visible)
+      {
+        map.Center = _locationIcon.Location;
+      }
     }
 
     private void Map_ZoomLevelChanged(MapControl sender, object args)
@@ -532,6 +541,7 @@ namespace FutarWP.Pages
       await Dispatcher.RunAsync(Windows.UI.Core.CoreDispatcherPriority.Normal, () =>
       {
         _locationIcon.Visible = args.Status == PositionStatus.Ready;
+        OnPropertyChanged(nameof(HasLocationServices));
       });
     }
 
