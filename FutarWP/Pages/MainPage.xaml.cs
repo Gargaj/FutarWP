@@ -36,6 +36,7 @@ namespace FutarWP.Pages
     private Dictionary<string, MapIcon> _vehicleIcons = new Dictionary<string, MapIcon>();
     private Dictionary<string, MapIcon> _stopIcons = new Dictionary<string, MapIcon>();
     private Panes _selectedPane = Panes.None;
+    private Dictionary<string, IRandomAccessStreamReference> _cachedStopIcons = new Dictionary<string, IRandomAccessStreamReference>();
 
     public enum Panes
     {
@@ -264,6 +265,7 @@ namespace FutarWP.Pages
           icon = new MapIcon()
           {
             ZIndex = ZIdxStops,
+            Image = await GetStopIcon(stop.style.colors),
             Location = new Geopoint(new BasicGeoposition()
             {
               Latitude = stop.lat,
@@ -436,6 +438,89 @@ namespace FutarWP.Pages
 
       _vehicleUpdate.Stop();
       _stopUpdate.Stop();
+    }
+
+    private async Task<IRandomAccessStreamReference> GetStopIcon(List<string> colors)
+    {
+      var key = string.Join(",", colors);
+      if (_cachedStopIcons.ContainsKey(key))
+      {
+        return _cachedStopIcons[key];
+      }
+
+      var ellipse = new Windows.UI.Xaml.Shapes.Ellipse()
+      {
+        Width = 24,
+        Height = 24,
+        Fill = new SolidColorBrush(Windows.UI.Colors.White),
+        StrokeThickness = 0,
+      };
+      renderCanvas.Children.Add(ellipse);
+
+      var path1 = new Windows.UI.Xaml.Shapes.Path()
+      {
+        StrokeThickness = 3,
+        Stroke = new SolidColorBrush(API.Helpers.ColorFromRGBHex(colors[0])),
+        Data = new PathGeometry()
+        {
+          Figures = new PathFigureCollection()
+          {
+            new PathFigure()
+            {
+              StartPoint = new Point(ellipse.Width/2, 0),
+              Segments = new PathSegmentCollection()
+              {
+                new ArcSegment()
+                {
+                  Size = new Size(ellipse.Width/2, ellipse.Height/2),
+                  Point = new Point(ellipse.Width/2, ellipse.Height),
+                }
+              }
+            }
+          }
+        }
+      };
+      renderCanvas.Children.Add(path1);
+      var path2 = new Windows.UI.Xaml.Shapes.Path()
+      {
+        StrokeThickness = 3,
+        Stroke = new SolidColorBrush(API.Helpers.ColorFromRGBHex(colors.Count > 1 ? colors[1] : colors[0])),
+        Data = new PathGeometry()
+        {
+          Figures = new PathFigureCollection()
+          {
+            new PathFigure()
+            {
+              StartPoint = new Point(ellipse.Width/2, ellipse.Height),
+              Segments = new PathSegmentCollection()
+              {
+                new ArcSegment()
+                {
+                  Size = new Size(ellipse.Width/2, ellipse.Height/2),
+                  Point = new Point(ellipse.Width/2, 0),
+                }
+              }
+            }
+          }
+        }
+      };
+      renderCanvas.Children.Add(path2);
+
+      var renderbmp = new RenderTargetBitmap();
+      await renderbmp.RenderAsync(renderCanvas, (int)ellipse.Width, (int)ellipse.Height);
+      renderCanvas.Children.Clear();
+
+      var stream = new InMemoryRandomAccessStream();
+      var encoder = await BitmapEncoder.CreateAsync(BitmapEncoder.PngEncoderId, stream);
+      var pixels = await renderbmp.GetPixelsAsync();
+      var reader = DataReader.FromBuffer(pixels);
+      byte[] bytes = new byte[reader.UnconsumedBufferLength];
+      reader.ReadBytes(bytes);
+      encoder.SetPixelData(BitmapPixelFormat.Bgra8, BitmapAlphaMode.Straight,
+          (uint)renderbmp.PixelWidth, (uint)renderbmp.PixelHeight, 0, 0, bytes);
+      await encoder.FlushAsync();
+      _cachedStopIcons[key] = RandomAccessStreamReference.CreateFromStream(stream);
+      return _cachedStopIcons[key];
     }
 
     private async void Geolocator_StatusChanged(Geolocator sender, StatusChangedEventArgs args)
