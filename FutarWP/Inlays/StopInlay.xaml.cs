@@ -27,13 +27,12 @@ namespace FutarWP.Inlays
 
     public string StopID { get; set; }
     public string StopName { get; set; }
-    public string IconURL { get; set; }
     public ObservableCollection<Trip> Trips { get; set; }
 
     public void Flush()
     {
       StopID = string.Empty;
-
+      
       StopName = string.Empty;
       OnPropertyChanged(nameof(StopName));
       Trips.Clear();
@@ -61,13 +60,20 @@ namespace FutarWP.Inlays
         return;
       }
 
-/*
-      IconURL = response.data.references.stops[entry.stopId].IconURL;
-      OnPropertyChanged(nameof(IconURL));
-*/
-      StopName = response.data.references.stops[entry.stopId].name;
-      OnPropertyChanged(nameof(StopName));
+      var stop = response.data.references.stops[entry.stopId];
 
+      StopName = stop.name;
+      OnPropertyChanged(nameof(StopName));
+      try
+      {
+        var stream = await _mainPage.GetStopIcon(stop.style.colors);
+        await iconBitmap.SetSourceAsync(stream.CloneStream());
+      }
+      catch (Exception)
+      {
+        // Sometimes fails, ignore it
+      }
+      
       foreach (var stopTime in response.data.entry.stopTimes)
       {
         var trip = Trips.FirstOrDefault(s => s.ID == stopTime.tripId);

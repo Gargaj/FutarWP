@@ -36,7 +36,7 @@ namespace FutarWP.Pages
     private Dictionary<string, MapIcon> _vehicleIcons = new Dictionary<string, MapIcon>();
     private Dictionary<string, MapIcon> _stopIcons = new Dictionary<string, MapIcon>();
     private Panes _selectedPane = Panes.None;
-    private Dictionary<string, IRandomAccessStreamReference> _cachedStopIcons = new Dictionary<string, IRandomAccessStreamReference>();
+    private Dictionary<string, InMemoryRandomAccessStream> _cachedStopIcons = new Dictionary<string, InMemoryRandomAccessStream>();
 
     public enum Panes
     {
@@ -63,10 +63,6 @@ namespace FutarWP.Pages
       map.MapElementClick += Map_MapElementClick;
       map.CenterChanged += Map_CenterChanged;
       map.ZoomLevelChanged += Map_ZoomLevelChanged;
-
-      // TODO: figure this out
-      //string styleSheetJson = @"{""version"": ""1.*"",""elements"":{""selected"":{ ""borderVisible"":true, ""borderOutlineColor"":""#FFFF00FF"", ""borderWidthScale"": 4 }}}";
-      //map.StyleSheet = MapStyleSheet.ParseFromJson(styleSheetJson);
     }
 
     public string MapHeight => SelectedPane == Panes.None ? "*" : "0.5*";
@@ -128,7 +124,6 @@ namespace FutarWP.Pages
         map.Center = tripInlay.MapElement.Location;
       }
 
-      //vehicleKVP.Value.MapStyleSheetEntry = "selected";
       await tripInlay.Refresh();
     }
 
@@ -136,13 +131,14 @@ namespace FutarWP.Pages
     {
       SelectedPane = Panes.Stop;
 
+      stopInlay.Flush();
+
       stopInlay.StopID = stopID;
       if (_stopIcons.ContainsKey(stopID))
       {
         map.Center = _stopIcons[stopID].Location;
       }
 
-      //vehicleKVP.Value.MapStyleSheetEntry = "selected";
       await stopInlay.Refresh();
     }
 
@@ -278,7 +274,7 @@ namespace FutarWP.Pages
           icon = new MapIcon()
           {
             ZIndex = ZIdxStops,
-            Image = await GetStopIcon(stop.style.colors),
+            Image = RandomAccessStreamReference.CreateFromStream(await GetStopIcon(stop.style.colors)),
             Location = new Geopoint(new BasicGeoposition()
             {
               Latitude = stop.lat,
@@ -453,7 +449,7 @@ namespace FutarWP.Pages
       _stopUpdate.Stop();
     }
 
-    private async Task<IRandomAccessStreamReference> GetStopIcon(List<string> colors)
+    public async Task<InMemoryRandomAccessStream> GetStopIcon(List<string> colors)
     {
       var key = string.Join(",", colors);
       if (_cachedStopIcons.ContainsKey(key))
@@ -532,8 +528,8 @@ namespace FutarWP.Pages
       encoder.SetPixelData(BitmapPixelFormat.Bgra8, BitmapAlphaMode.Straight,
           (uint)renderbmp.PixelWidth, (uint)renderbmp.PixelHeight, 0, 0, bytes);
       await encoder.FlushAsync();
-      _cachedStopIcons[key] = RandomAccessStreamReference.CreateFromStream(stream);
-      return _cachedStopIcons[key];
+      _cachedStopIcons[key] = stream;
+      return _cachedStopIcons[key];      
     }
 
     private async void Geolocator_StatusChanged(Geolocator sender, StatusChangedEventArgs args)
