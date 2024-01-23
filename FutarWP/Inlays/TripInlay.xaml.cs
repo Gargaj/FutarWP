@@ -73,6 +73,8 @@ namespace FutarWP.Inlays
         return;
       }
 
+      await _mainPage.CacheStops(response?.data?.references?.stops?.Values.ToList());
+
       var trip = response.data.references.trips[TripID];
       var route = response.data.references.routes[trip.routeId];
 

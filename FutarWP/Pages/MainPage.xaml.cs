@@ -249,7 +249,11 @@ namespace FutarWP.Pages
         lonSpan = Math.Abs(topLeft.Position.Longitude - bottomRight.Position.Longitude) * 0.5,
       });
 
-      var stops = response?.data?.list;
+      await CacheStops(response?.data?.list);
+    }
+
+    public async Task CacheStops(List<API.Types.Stop> stops)
+    {
       if (stops == null)
       {
         return;
