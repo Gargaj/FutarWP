@@ -70,13 +70,11 @@
 
           <!-- TIMING -->
           <StackPanel Grid.Row="2" Grid.Column="0" Grid.ColumnSpan="3" Orientation="Horizontal">
-            <ComboBox>
-              <ComboBoxItem>Now</ComboBoxItem>
-              <ComboBoxItem>Depart at</ComboBoxItem>
-              <ComboBoxItem>Arrive by</ComboBoxItem>
-            </ComboBox>
-            <CalendarDatePicker Date="{Binding PlanDate}" DateFormat="{}{dayofweek.abbreviated}‎, ‎{month.abbreviated}‎ ‎{day.integer}‎, ‎{year.full}"/>
-            <TimePicker Time="{Binding PlanTime}" MinWidth="70" ClockIdentifier="24HourClock"/>
+            <ComboBox ItemsSource="{Binding TimingStrings}" SelectedIndex="{Binding SelectedTiming, Mode=TwoWay}" Width="120"/>
+            <StackPanel Orientation="Horizontal" Visibility="{Binding TimingPickersVisibility}">
+              <CalendarDatePicker Date="{Binding PlanDate, Mode=TwoWay}" DateFormat="{}{dayofweek.abbreviated}‎, ‎{month.abbreviated}‎ ‎{day.integer}‎, ‎{year.full}"/>
+              <TimePicker Time="{Binding PlanTime, Mode=TwoWay}" MinWidth="70" ClockIdentifier="24HourClock"/>
+            </StackPanel>
           </StackPanel>
           <Button Grid.Row="2" Grid.Column="4" Click="SearchButton_Click" HorizontalAlignment="Stretch">
             <FontIcon Glyph="&#xE721;"/>

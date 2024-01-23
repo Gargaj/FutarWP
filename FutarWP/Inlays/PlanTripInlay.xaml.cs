@@ -5,8 +5,6 @@ using System.ComponentModel;
 using System.Globalization;
 using System.Linq;
 using System.Threading.Tasks;
-using Windows.Devices.Geolocation;
-using Windows.Foundation;
 using Windows.UI.Xaml;
 using Windows.UI.Xaml.Controls;
 
@@ -16,7 +14,14 @@ namespace FutarWP.Inlays
   {
     private App _app;
     private Pages.MainPage _mainPage;
-    
+    private Timing _selectedTiming = Timing.Now;
+    public enum Timing
+    {
+      Now,
+      DepartAt,
+      ArriveBy,
+    }
+
     public PlanTripInlay()
     {
       InitializeComponent();
@@ -34,9 +39,16 @@ namespace FutarWP.Inlays
     }
 
     public bool IsLoading { get; set; }
+    public List<string> TimingStrings { get; } = 
+      Enum.GetValues(typeof(Timing))
+      .Cast<Timing>()
+      .Select(s => System.Text.RegularExpressions.Regex.Replace(s.ToString(), "(\\B[A-Z])", " $1"))
+      .ToList();
+    public int SelectedTiming { get => (int)_selectedTiming; set { _selectedTiming = (Timing)value; OnPropertyChanged(nameof(TimingPickersVisibility)); } }
     public ObservableCollection<ResultItinerary> ResultItineraries { get; set; }
-    public DateTimeOffset PlanDate { get; set; } = DateTimeOffset.Now;
-    public TimeSpan PlanTime { get; set; } = new TimeSpan(DateTime.Now.Hour, DateTime.Now.Minute, DateTime.Now.Second);
+    public DateTimeOffset? PlanDate { get; set; } = DateTimeOffset.Now;
+    public TimeSpan? PlanTime { get; set; } = new TimeSpan(DateTime.Now.Hour, DateTime.Now.Minute, DateTime.Now.Second);
+    public Visibility TimingPickersVisibility { get => _selectedTiming == Timing.Now ? Visibility.Collapsed : Visibility.Visible; }
 
     public void Flush()
     {
@@ -76,6 +88,12 @@ namespace FutarWP.Inlays
         toPlace = $"{toField.Text}::{to.Latitude.ToString(CultureInfo.InvariantCulture)},{to.Longitude.ToString(CultureInfo.InvariantCulture)}",
         mode = new List<string>() { "SUBWAY", "SUBURBAN_RAILWAY", "FERRY", "TRAM", "TROLLEYBUS", "BUS", "RAIL", "COACH", "WALK" }
       };
+      if (_selectedTiming != Timing.Now)
+      {
+        command.arriveBy = _selectedTiming == Timing.ArriveBy;
+        command.date = PlanDate.Value.ToString("yyyy-MM-dd");
+        command.time = PlanTime.Value.ToString(@"hh\:mm");
+      }
 
       IsLoading = true;
       OnPropertyChanged(nameof(IsLoading));
