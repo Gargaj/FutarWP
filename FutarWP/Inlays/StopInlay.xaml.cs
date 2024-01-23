@@ -64,16 +64,10 @@ namespace FutarWP.Inlays
 
       StopName = stop.name;
       OnPropertyChanged(nameof(StopName));
-      try
-      {
-        var stream = await _mainPage.GetStopIcon(stop.style.colors);
-        await iconBitmap.SetSourceAsync(stream.CloneStream());
-      }
-      catch (Exception)
-      {
-        // Sometimes fails, ignore it
-      }
-      
+
+      var stream = await _mainPage.GetStopIcon(stop.style.colors);
+      iconBitmap.SetSource(stream.CloneStream());
+
       foreach (var stopTime in response.data.entry.stopTimes)
       {
         var trip = Trips.FirstOrDefault(s => s.ID == stopTime.tripId);
