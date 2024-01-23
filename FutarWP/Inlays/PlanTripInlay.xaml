@@ -70,9 +70,9 @@
 
           <!-- TIMING -->
           <StackPanel Grid.Row="2" Grid.Column="0" Grid.ColumnSpan="3" Orientation="Horizontal">
-            <ComboBox ItemsSource="{Binding TimingStrings}" SelectedIndex="{Binding SelectedTiming, Mode=TwoWay}" Width="120"/>
+            <ComboBox ItemsSource="{Binding TimingStrings}" SelectedIndex="{Binding SelectedTiming, Mode=TwoWay}" Width="110"/>
             <StackPanel Orientation="Horizontal" Visibility="{Binding TimingPickersVisibility}">
-              <CalendarDatePicker Date="{Binding PlanDate, Mode=TwoWay}" DateFormat="{}{dayofweek.abbreviated}‎, ‎{month.abbreviated}‎ ‎{day.integer}‎, ‎{year.full}"/>
+              <CalendarDatePicker Date="{Binding PlanDate, Mode=TwoWay}" DateFormat="{}{month.abbreviated}‎ ‎{day.integer}‎, ‎{year.full}"/>
               <TimePicker Time="{Binding PlanTime, Mode=TwoWay}" MinWidth="70" ClockIdentifier="24HourClock"/>
             </StackPanel>
           </StackPanel>
