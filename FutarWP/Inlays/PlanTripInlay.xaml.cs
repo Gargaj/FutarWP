@@ -27,13 +27,13 @@ namespace FutarWP.Inlays
       InitializeComponent();
       _app = (App)Application.Current;
       _mainPage = _app.GetCurrentFrame<Pages.MainPage>();
-      Loaded += SearchInlay_Loaded;
+      Loaded += PlanTripInlay_Loaded;
       DataContext = this;
 
       ResultItineraries = new ObservableCollection<ResultItinerary>();
     }
 
-    private void SearchInlay_Loaded(object sender, RoutedEventArgs e)
+    private void PlanTripInlay_Loaded(object sender, RoutedEventArgs e)
     {
       _mainPage = _app.GetCurrentFrame<Pages.MainPage>();
     }
@@ -116,6 +116,8 @@ namespace FutarWP.Inlays
       }
 
       ResultItineraries = new ObservableCollection<ResultItinerary>(itineraries.Select(s => new ResultItinerary() {
+        References = response.data.references,
+        Itinerary = s,
         DurationInSeconds = s.duration,
         StartTime = API.Helpers.UnixTimeStampMillisecondsToDateTime(s.startTime),
         EndTime = API.Helpers.UnixTimeStampMillisecondsToDateTime(s.endTime),
@@ -148,6 +150,7 @@ namespace FutarWP.Inlays
       var location = _mainPage.LocationIcon?.Location?.Position;
       if (location != null)
       {
+        // TODO: load GPS location
       }
     }
 
@@ -156,21 +159,25 @@ namespace FutarWP.Inlays
       var location = _mainPage.LocationIcon?.Location?.Position;
       if (location != null)
       {
+        // TODO: load GPS location
       }
     }
 
-    private void PlanResult_Click(object sender, RoutedEventArgs e)
+    private async void PlanResult_Click(object sender, RoutedEventArgs e)
     {
       var button = sender as Button;
-      var dataContext = button.DataContext as SearchInlay.SearchResult;
-      if (dataContext == null)
+      var dataContext = button.DataContext as ResultItinerary;
+      if (dataContext != null)
       {
-        return;
+        await _mainPage?.SelectPlanTripDetail(dataContext.Itinerary, dataContext.References);
       }
     }
 
     public class ResultItinerary
     {
+      public API.Commands.PlanTripEntry.Itinerary Itinerary { get; set; }
+      public API.Reference References { get; internal set; }
+
       public uint DurationInSeconds { get; set; }
       public uint DurationInMinutes => DurationInSeconds / 60;
       public DateTime StartTime { get; set; }
@@ -178,6 +185,7 @@ namespace FutarWP.Inlays
       public string StartTimeString => StartTime.ToString("HH:mm");
       public string EndTimeString => EndTime.ToString("HH:mm");
       public List<Leg> Legs { get; set; }
+
       public class Leg
       {
         public string BackColor { get; set; }

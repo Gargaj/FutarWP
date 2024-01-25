@@ -24,6 +24,7 @@
       <inlays:StopInlay x:Name="stopInlay"/>
       <inlays:SearchInlay x:Name="searchInlay"/>
       <inlays:PlanTripInlay x:Name="planTripInlay"/>
+      <inlays:PlanTripDetailInlay x:Name="planTripDetailInlay"/>
     </Grid>
     <CommandBar Grid.Row="2" ClosedDisplayMode="Minimal">
       <AppBarButton Icon="MapPin" Label="Find me" ToolTipService.ToolTip="Find me" Click="FindMe_Click" IsEnabled="{Binding HasLocationServices}"/>

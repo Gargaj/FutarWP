@@ -120,11 +120,15 @@
       <DependentUpon>App.xaml</DependentUpon>
     </Compile>
     <Compile Include="BingAPIKey.cs" />
+    <Compile Include="Inlays\PlanTripDetailLegTemplateSelector.cs" />
     <Compile Include="Inlays\PlanTripInlay.xaml.cs">
       <DependentUpon>PlanTripInlay.xaml</DependentUpon>
     </Compile>
     <Compile Include="Inlays\SearchInlay.xaml.cs">
       <DependentUpon>SearchInlay.xaml</DependentUpon>
+    </Compile>
+    <Compile Include="Inlays\PlanTripDetailInlay.xaml.cs">
+      <DependentUpon>PlanTripDetailInlay.xaml</DependentUpon>
     </Compile>
     <Compile Include="Inlays\StopInlay.xaml.cs">
       <DependentUpon>StopInlay.xaml</DependentUpon>
@@ -166,6 +170,10 @@
     <Page Include="Inlays\SearchInlay.xaml">
       <SubType>Designer</SubType>
       <Generator>MSBuild:Compile</Generator>
+    </Page>
+    <Page Include="Inlays\PlanTripDetailInlay.xaml">
+      <Generator>MSBuild:Compile</Generator>
+      <SubType>Designer</SubType>
     </Page>
     <Page Include="Inlays\StopInlay.xaml">
       <Generator>MSBuild:Compile</Generator>

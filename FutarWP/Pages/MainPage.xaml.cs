@@ -18,8 +18,8 @@ namespace FutarWP.Pages
 {
   public partial class MainPage : Page, INotifyPropertyChanged
   {
-    private readonly float VehicleMinZoomLevel = 16.0f;
-    private readonly float StopsMinZoomLevel = 14.0f;
+    public readonly float VehicleMinZoomLevel = 16.0f;
+    public readonly float StopsMinZoomLevel = 14.0f;
 
     public static readonly int ZIdxRouteLine = 10;
     public static readonly int ZIdxStops = 20;
@@ -45,7 +45,7 @@ namespace FutarWP.Pages
       Stop,
       Search,
       PlanTrip,
-      TripDetail,
+      PlanTripDetail,
     }
 
     public MainPage()
@@ -75,7 +75,12 @@ namespace FutarWP.Pages
         if (_selectedPane != value)
         {
           searchInlay.Flush();
-          planTripInlay.Flush();
+          if (value != Panes.PlanTripDetail && _selectedPane != Panes.PlanTripDetail)
+          {
+            // Only flush this when we're not moving to/from a detail view
+            planTripInlay.Flush();
+          }
+          planTripDetailInlay.Flush();
           stopInlay.Flush();
           tripInlay.Flush();
         }
@@ -84,6 +89,7 @@ namespace FutarWP.Pages
         stopInlay.Visibility = _selectedPane == Panes.Stop ? Visibility.Visible : Visibility.Collapsed;
         searchInlay.Visibility = _selectedPane == Panes.Search ? Visibility.Visible : Visibility.Collapsed;
         planTripInlay.Visibility = _selectedPane == Panes.PlanTrip ? Visibility.Visible : Visibility.Collapsed;
+        planTripDetailInlay.Visibility = _selectedPane == Panes.PlanTripDetail ? Visibility.Visible : Visibility.Collapsed;
         OnPropertyChanged(nameof(MapHeight));
         OnPropertyChanged(nameof(PaneHeight));
       }
@@ -142,6 +148,17 @@ namespace FutarWP.Pages
       await stopInlay.Refresh();
     }
 
+    public void SelectPlanTrip()
+    {
+      SelectedPane = Panes.PlanTrip;
+    }
+
+    public async Task SelectPlanTripDetail(API.Commands.PlanTripEntry.Itinerary itinerary, API.Reference references)
+    {
+      SelectedPane = Panes.PlanTripDetail;
+      await planTripDetailInlay.ShowItinerary(itinerary, references);
+    }
+
     public void ClosePane()
     {
       tripInlay.Flush();
@@ -161,7 +178,7 @@ namespace FutarWP.Pages
 
     private void Directions_Click(object sender, RoutedEventArgs e)
     {
-      SelectedPane = Panes.PlanTrip;
+      SelectPlanTrip();
     }
 
     private void FindMe_Click(object sender, RoutedEventArgs e)

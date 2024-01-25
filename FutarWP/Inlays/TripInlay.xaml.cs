@@ -175,8 +175,10 @@ namespace FutarWP.Inlays
       public string ArrivalTimeString => ArrivalTime.Year > 1 ? ArrivalTime.ToString("HH:mm") : string.Empty;
       public string DepartureTimeString => DepartureTime.Year > 1 ? DepartureTime.ToString("HH:mm") : string.Empty;
       public string Name { get; set; }
+      public double Latitude { get; set; }
+      public double Longitude { get; set; }
       public uint StopSequenceIndex { get; set; }
-      public bool IsPassed { get { return _parent.StopSequenceIndex > StopSequenceIndex; } }
+      public bool IsPassed { get { return _parent == null ? false : _parent.StopSequenceIndex > StopSequenceIndex; } }
 
       public void Update()
       {

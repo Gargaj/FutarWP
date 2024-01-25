@@ -75,5 +75,18 @@ namespace FutarWP.API
       byte b = byte.Parse(hexColor.Substring(4, 2), System.Globalization.NumberStyles.HexNumber);
       return Windows.UI.Color.FromArgb(255, r, g, b);
     }
+
+    public static GeoboundingBox ExpandGeoboundingBox(GeoboundingBox bb, BasicGeoposition position)
+    {
+      return new GeoboundingBox(new BasicGeoposition()
+      {
+        Latitude = Math.Max(bb.NorthwestCorner.Latitude, position.Latitude),
+        Longitude = Math.Min(bb.NorthwestCorner.Longitude, position.Longitude)
+      }, new BasicGeoposition()
+      {
+        Latitude = Math.Min(bb.SoutheastCorner.Latitude, position.Latitude),
+        Longitude = Math.Max(bb.SoutheastCorner.Longitude, position.Longitude)
+      });
+    }
   }
 }
