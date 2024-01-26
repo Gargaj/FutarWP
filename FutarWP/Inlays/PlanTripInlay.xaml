@@ -36,8 +36,8 @@
         
           <!-- FROM -->
           <FontIcon Grid.Row="0" Grid.Column="0" Glyph="&#xEB49;" Margin="0,0,5,0"/>
-          <Button Grid.Row="0" Grid.Column="1" Click="FromLocation_Click" HorizontalAlignment="Stretch" Background="Transparent" Padding="0">
-            <FontIcon Glyph="&#xE81D;" Margin="0,0,5,0"/>
+          <Button Grid.Row="0" Grid.Column="1" Click="FromLocation_Click" HorizontalAlignment="Stretch" VerticalAlignment="Stretch" Background="Transparent" Padding="0" Margin="0,0,5,0">
+            <FontIcon Glyph="&#xE81D;"/>
           </Button>
           <AutoSuggestBox Grid.Row="0" Grid.Column="2" Grid.ColumnSpan="2" x:Name="fromField" PlaceholderText="From..." TextChanged="AutoSuggestTextChanged" SuggestionChosen="AutoSuggestSuggestionChosen">
             <AutoSuggestBox.ItemTemplate>
@@ -53,8 +53,8 @@
 
           <!-- TO -->
           <FontIcon Grid.Row="1" Grid.Column="0" Glyph="&#xEB4B;" Margin="0,0,5,0"/>
-          <Button Grid.Row="1" Grid.Column="1" Click="ToLocation_Click" HorizontalAlignment="Stretch" Background="Transparent" Padding="0">
-            <FontIcon Glyph="&#xE81D;" Margin="0,0,5,0"/>
+          <Button Grid.Row="1" Grid.Column="1" Click="ToLocation_Click" HorizontalAlignment="Stretch" VerticalAlignment="Stretch" Background="Transparent" Padding="0" Margin="0,0,5,0">
+            <FontIcon Glyph="&#xE81D;"/>
           </Button>
           <AutoSuggestBox Grid.Row="1" Grid.Column="2" Grid.ColumnSpan="2" x:Name="toField" PlaceholderText="To..." TextChanged="AutoSuggestTextChanged" SuggestionChosen="AutoSuggestSuggestionChosen">
             <AutoSuggestBox.ItemTemplate>
