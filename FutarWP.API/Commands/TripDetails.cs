@@ -16,7 +16,7 @@ namespace FutarWP.API.Commands
     public string serviceDate;
     public string vertex;
     public Types.Vehicle vehicle;
-    public Types.Polyline polyline; // todo
+    public Types.Polyline polyline;
     public List<object> alertIds;
     public List<Types.StopTime> stopTimes;
     public bool mayRequireBooking;

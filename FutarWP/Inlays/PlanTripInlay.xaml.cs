@@ -5,6 +5,7 @@ using System.ComponentModel;
 using System.Globalization;
 using System.Linq;
 using System.Threading.Tasks;
+using Windows.Devices.Geolocation;
 using Windows.UI.Xaml;
 using Windows.UI.Xaml.Controls;
 
@@ -147,20 +148,27 @@ namespace FutarWP.Inlays
 
     private void FromLocation_Click(object sender, RoutedEventArgs e)
     {
-      var location = _mainPage.LocationIcon?.Location?.Position;
-      if (location != null)
-      {
-        // TODO: load GPS location
-      }
+      SetLocationToSearchField(fromField);
     }
 
     private void ToLocation_Click(object sender, RoutedEventArgs e)
     {
-      var location = _mainPage.LocationIcon?.Location?.Position;
-      if (location != null)
+      SetLocationToSearchField(toField);
+    }
+
+    private void SetLocationToSearchField(AutoSuggestBox box)
+    {
+      var geoPos = _mainPage.LocationInfo as Geoposition;
+      if (geoPos == null)
       {
-        // TODO: load GPS location
+        return;
       }
+      box.Text = geoPos.CivicAddress?.ToString() ?? $"{geoPos.Coordinate.Point.Position.Latitude}, {geoPos.Coordinate.Point.Position.Longitude}";
+      box.Tag = new SearchInlay.SearchResult()
+      {
+        Latitude = geoPos.Coordinate.Point.Position.Latitude,
+        Longitude = geoPos.Coordinate.Point.Position.Longitude,
+      };
     }
 
     private async void PlanResult_Click(object sender, ItemClickEventArgs e)

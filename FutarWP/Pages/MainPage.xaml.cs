@@ -28,6 +28,7 @@ namespace FutarWP.Pages
 
     private App _app;
     private MapIcon _locationIcon = new MapIcon() { Visible = false };
+    private Geoposition _locationInfo;
     private Geolocator _geolocator = null;
     private bool _mapReady = false;
     private bool _mapReset = false;
@@ -96,6 +97,7 @@ namespace FutarWP.Pages
     }
     public MapControl Map => map;
     public MapIcon LocationIcon => _locationIcon;
+    public Geoposition LocationInfo => _locationInfo;
     public bool HasLocationServices => _locationIcon?.Visible ?? false;
 
     private async void Map_MapElementClick(MapControl sender, MapElementClickEventArgs args)
@@ -554,6 +556,10 @@ namespace FutarWP.Pages
       await Dispatcher.RunAsync(Windows.UI.Core.CoreDispatcherPriority.Normal, () =>
       {
         _locationIcon.Visible = args.Status == PositionStatus.Ready;
+        if (args.Status != PositionStatus.Ready)
+        {
+          _locationInfo = null;
+        }
         OnPropertyChanged(nameof(HasLocationServices));
       });
     }
@@ -568,6 +574,7 @@ namespace FutarWP.Pages
           map.ZoomLevel = 18.0f;
           _mapReset = true;
         }
+        _locationInfo = args.Position;
         _locationIcon.Location = new Geopoint(args.Position.Coordinate.Point.Position);
       });
     }

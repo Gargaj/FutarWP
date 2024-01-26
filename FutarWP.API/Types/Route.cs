@@ -12,7 +12,7 @@
     public string iconDisplayType;
     public string iconDisplayText;
     public bool bikesAllowed;
-    public Style style; // TODO
+    public Style style;
     public uint sortOrder;
   }
 }
