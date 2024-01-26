@@ -148,10 +148,9 @@ namespace FutarWP.Inlays
       _mainPage?.ClosePane();
     }
 
-    private async void Stop_Click(object sender, RoutedEventArgs e)
+    private async void Stop_Click(object sender, ItemClickEventArgs e)
     {
-      var button = sender as Button;
-      var stop = button.DataContext as Stop;
+      var stop = e.ClickedItem as Stop;
       await _mainPage?.SelectStop(stop.ID);
     }
 

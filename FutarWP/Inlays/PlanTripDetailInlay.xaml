@@ -36,7 +36,7 @@
           </TextBlock>
         </StackPanel>
 
-        <ListView Grid.Row="1" ItemsSource="{Binding Stops}">
+        <ListView Grid.Row="1" ItemsSource="{Binding Stops}" ItemClick="Stop_Click" IsItemClickEnabled="True">
           <ListView.ItemContainerStyle>
             <Style TargetType="ListViewItem">
               <Setter Property="Margin" Value="0"/>
@@ -48,46 +48,38 @@
           <ListView.ItemTemplate>
             <DataTemplate>
 
-              <Button Click="Stop_Click" HorizontalAlignment="Stretch">
-                <Button.Template>
-                  <ControlTemplate>
-
-                    <StackPanel Orientation="Horizontal">
-                      <TextBlock Text="{Binding ArrivalTimeString}" Margin="10,0,5,5" Foreground="Green" Width="40">
-                    <i:Interaction.Behaviors>
-                      <c:DataTriggerBehavior Binding="{Binding IsPassed}" Value="True">
-                        <c:ChangePropertyAction PropertyName="Opacity" Value="0.5" />
-                      </c:DataTriggerBehavior>
-                      <c:DataTriggerBehavior Binding="{Binding IsPassed}" Value="False">
-                        <c:ChangePropertyAction PropertyName="Opacity" Value="1.0" />
-                      </c:DataTriggerBehavior>
-                    </i:Interaction.Behaviors>
-                      </TextBlock>
-                      <TextBlock Text="{Binding DepartureTimeString}" Margin="0,0,10,5" Foreground="Green" Width="40">
-                    <i:Interaction.Behaviors>
-                      <c:DataTriggerBehavior Binding="{Binding IsPassed}" Value="True">
-                        <c:ChangePropertyAction PropertyName="Opacity" Value="0.5" />
-                      </c:DataTriggerBehavior>
-                      <c:DataTriggerBehavior Binding="{Binding IsPassed}" Value="False">
-                        <c:ChangePropertyAction PropertyName="Opacity" Value="1.0" />
-                      </c:DataTriggerBehavior>
-                    </i:Interaction.Behaviors>
-                      </TextBlock>
-                      <TextBlock Text="{Binding Name}">
-                    <i:Interaction.Behaviors>
-                      <c:DataTriggerBehavior Binding="{Binding IsPassed}" Value="True">
-                        <c:ChangePropertyAction PropertyName="Opacity" Value="0.5" />
-                      </c:DataTriggerBehavior>
-                      <c:DataTriggerBehavior Binding="{Binding IsPassed}" Value="False">
-                        <c:ChangePropertyAction PropertyName="Opacity" Value="1.0" />
-                      </c:DataTriggerBehavior>
-                    </i:Interaction.Behaviors>
-                      </TextBlock>
-                    </StackPanel>
-
-                  </ControlTemplate>
-                </Button.Template>
-              </Button>
+              <StackPanel Orientation="Horizontal">
+                <TextBlock Text="{Binding ArrivalTimeString}" Margin="10,0,5,5" Foreground="Green" Width="40">
+              <i:Interaction.Behaviors>
+                <c:DataTriggerBehavior Binding="{Binding IsPassed}" Value="True">
+                  <c:ChangePropertyAction PropertyName="Opacity" Value="0.5" />
+                </c:DataTriggerBehavior>
+                <c:DataTriggerBehavior Binding="{Binding IsPassed}" Value="False">
+                  <c:ChangePropertyAction PropertyName="Opacity" Value="1.0" />
+                </c:DataTriggerBehavior>
+              </i:Interaction.Behaviors>
+                </TextBlock>
+                <TextBlock Text="{Binding DepartureTimeString}" Margin="0,0,10,5" Foreground="Green" Width="40">
+              <i:Interaction.Behaviors>
+                <c:DataTriggerBehavior Binding="{Binding IsPassed}" Value="True">
+                  <c:ChangePropertyAction PropertyName="Opacity" Value="0.5" />
+                </c:DataTriggerBehavior>
+                <c:DataTriggerBehavior Binding="{Binding IsPassed}" Value="False">
+                  <c:ChangePropertyAction PropertyName="Opacity" Value="1.0" />
+                </c:DataTriggerBehavior>
+              </i:Interaction.Behaviors>
+                </TextBlock>
+                <TextBlock Text="{Binding Name}">
+              <i:Interaction.Behaviors>
+                <c:DataTriggerBehavior Binding="{Binding IsPassed}" Value="True">
+                  <c:ChangePropertyAction PropertyName="Opacity" Value="0.5" />
+                </c:DataTriggerBehavior>
+                <c:DataTriggerBehavior Binding="{Binding IsPassed}" Value="False">
+                  <c:ChangePropertyAction PropertyName="Opacity" Value="1.0" />
+                </c:DataTriggerBehavior>
+              </i:Interaction.Behaviors>
+                </TextBlock>
+              </StackPanel>
 
             </DataTemplate>
           </ListView.ItemTemplate>

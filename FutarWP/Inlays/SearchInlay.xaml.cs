@@ -135,10 +135,9 @@ namespace FutarWP.Inlays
       OnPropertyChanged(nameof(Results));
     }
 
-    private void SearchResult_Click(object sender, RoutedEventArgs e)
+    private void SearchResult_Click(object sender, ItemClickEventArgs e)
     {
-      var button = sender as Button;
-      var dataContext = button.DataContext as SearchResult;
+      var dataContext = e.ClickedItem as SearchResult;
       if (dataContext != null)
       {
         _mainPage.Map.ZoomLevel = 17.0f;

@@ -32,7 +32,7 @@
       <FontIcon Glyph="&#xE711;" FontSize="12"/>
     </Button>
 
-    <ListView Grid.Row="1" Grid.ColumnSpan="2" ItemsSource="{Binding Trips}">
+    <ListView Grid.Row="1" Grid.ColumnSpan="2" ItemsSource="{Binding Trips}" ItemClick="Trip_Click" IsItemClickEnabled="True">
       <ListView.ItemContainerStyle>
         <Style TargetType="ListViewItem">
           <Setter Property="Margin" Value="5,5,0,0"/>
@@ -43,19 +43,13 @@
       </ListView.ItemContainerStyle>
       <ListView.ItemTemplate>
         <DataTemplate>
-          <Button Click="Trip_Click">
-            <Button.Template>
-              <ControlTemplate>
-                <StackPanel Orientation="Horizontal">
-                  <Border Width="50" Padding="2" Margin="0,0,5,0" Background="{Binding RouteBackgroundColor}">
-                    <TextBlock Text="{Binding RouteShortName}" TextAlignment="Center" FontWeight="Bold" Foreground="{Binding RouteForegroundColor}"/>
-                  </Border>
-                  <TextBlock Text="{Binding MinutesLeftString}" VerticalAlignment="Center" Width="50"/>
-                  <TextBlock Text="{Binding RouteDescription}" VerticalAlignment="Center"/>
-                </StackPanel>
-              </ControlTemplate>
-            </Button.Template>
-          </Button>
+          <StackPanel Orientation="Horizontal">
+            <Border Width="50" Padding="2" Margin="0,0,5,0" Background="{Binding RouteBackgroundColor}">
+              <TextBlock Text="{Binding RouteShortName}" TextAlignment="Center" FontWeight="Bold" Foreground="{Binding RouteForegroundColor}"/>
+            </Border>
+            <TextBlock Text="{Binding MinutesLeftString}" VerticalAlignment="Center" Width="50"/>
+            <TextBlock Text="{Binding RouteDescription}" VerticalAlignment="Center"/>
+          </StackPanel>
         </DataTemplate>
       </ListView.ItemTemplate>
     </ListView>

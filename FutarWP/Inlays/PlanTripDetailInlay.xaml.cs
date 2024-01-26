@@ -143,10 +143,9 @@ namespace FutarWP.Inlays
       await _mainPage.Map.TrySetViewBoundsAsync(bb, new Thickness(5.0f), MapAnimationKind.Default);
     }
 
-    private void Stop_Click(object sender, RoutedEventArgs e)
+    private void Stop_Click(object sender, ItemClickEventArgs e)
     {
-      var button = sender as Button;
-      var stop = button.DataContext as TripInlay.Stop;
+      var stop = e.ClickedItem as TripInlay.Stop;
       _mainPage.Map.Center = new Geopoint(new BasicGeoposition() {
         Latitude = stop.Latitude,
         Longitude = stop.Longitude,

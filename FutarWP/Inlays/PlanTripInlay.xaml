@@ -86,7 +86,7 @@
       </Grid>
 
       <ProgressRing Grid.Row="1" Grid.ColumnSpan="2" Width="64" Height="64" HorizontalAlignment="Center" IsActive="{Binding IsLoading}"/>
-      <ListView Grid.Row="1" Grid.ColumnSpan="2" ItemsSource="{Binding ResultItineraries}">
+      <ListView Grid.Row="1" Grid.ColumnSpan="2" ItemsSource="{Binding ResultItineraries}" ItemClick="PlanResult_Click" IsItemClickEnabled="True">
         <ListView.ItemContainerStyle>
           <Style TargetType="ListViewItem">
             <Setter Property="Margin" Value="0"/>
@@ -97,50 +97,44 @@
         </ListView.ItemContainerStyle>
         <ListView.ItemTemplate>
           <DataTemplate>
-            <Button Click="PlanResult_Click" HorizontalAlignment="Stretch">
-              <Button.Template>
-                <ControlTemplate>
 
-                  <Grid Padding="5">
-                    <Grid.RowDefinitions>
-                      <RowDefinition Height="20"/>
-                      <RowDefinition Height="*"/>
-                    </Grid.RowDefinitions>
-                    <TextBlock Grid.Row="0">
-                      <Run Text="{Binding StartTimeString}"/>
-                      <Run Text="-"/>
-                      <Run Text="{Binding EndTimeString}"/>
-                      <Run Text="("/><Run Text="{Binding DurationInMinutes}"/>
-                      <Run Text="minutes)"/>
-                    </TextBlock>
-                    <ListView Grid.Row="1" ItemsSource="{Binding Legs}">
-                      <ListView.ItemContainerStyle>
-                        <Style TargetType="ListViewItem">
-                          <Setter Property="Margin" Value="0"/>
-                          <Setter Property="Padding" Value="0"/>
-                          <Setter Property="HorizontalContentAlignment" Value="Stretch"/>
-                          <Setter Property="MinWidth" Value="0"/>
-                          <Setter Property="MinHeight" Value="0"/>
-                        </Style>
-                      </ListView.ItemContainerStyle>
-                      <ListView.ItemsPanel>
-                        <ItemsPanelTemplate>
-                          <StackPanel Orientation="Horizontal"/>
-                        </ItemsPanelTemplate>
-                      </ListView.ItemsPanel>
-                      <ListView.ItemTemplate>
-                        <DataTemplate>
-                          <Border MinWidth="50" Padding="8,2,8,2" Margin="0,0,5,0" Background="{Binding BackColor}">
-                            <TextBlock TextAlignment="Center" FontWeight="Bold" Foreground="{Binding ForeColor}" Text="{Binding Text}"/>
-                          </Border>
-                        </DataTemplate>
-                      </ListView.ItemTemplate>
-                    </ListView>
-                  </Grid>
+            <Grid Padding="5">
+              <Grid.RowDefinitions>
+                <RowDefinition Height="20"/>
+                <RowDefinition Height="*"/>
+              </Grid.RowDefinitions>
+              <TextBlock Grid.Row="0">
+                <Run Text="{Binding StartTimeString}"/>
+                <Run Text="-"/>
+                <Run Text="{Binding EndTimeString}"/>
+                <Run Text="("/><Run Text="{Binding DurationInMinutes}"/>
+                <Run Text="minutes)"/>
+              </TextBlock>
+              <ListView Grid.Row="1" ItemsSource="{Binding Legs}" IsItemClickEnabled="False">
+                <ListView.ItemContainerStyle>
+                  <Style TargetType="ListViewItem">
+                    <Setter Property="Margin" Value="0"/>
+                    <Setter Property="Padding" Value="0"/>
+                    <Setter Property="HorizontalContentAlignment" Value="Stretch"/>
+                    <Setter Property="MinWidth" Value="0"/>
+                    <Setter Property="MinHeight" Value="0"/>
+                  </Style>
+                </ListView.ItemContainerStyle>
+                <ListView.ItemsPanel>
+                  <ItemsPanelTemplate>
+                    <StackPanel Orientation="Horizontal"/>
+                  </ItemsPanelTemplate>
+                </ListView.ItemsPanel>
+                <ListView.ItemTemplate>
+                  <DataTemplate>
+                    <Border MinWidth="50" Padding="8,2,8,2" Margin="0,0,5,0" Background="{Binding BackColor}">
+                      <TextBlock TextAlignment="Center" FontWeight="Bold" Foreground="{Binding ForeColor}" Text="{Binding Text}"/>
+                    </Border>
+                  </DataTemplate>
+                </ListView.ItemTemplate>
+              </ListView>
+            </Grid>
 
-                </ControlTemplate>
-              </Button.Template>
-            </Button>
           </DataTemplate>
         </ListView.ItemTemplate>
       </ListView>

@@ -163,10 +163,9 @@ namespace FutarWP.Inlays
       }
     }
 
-    private async void PlanResult_Click(object sender, RoutedEventArgs e)
+    private async void PlanResult_Click(object sender, ItemClickEventArgs e)
     {
-      var button = sender as Button;
-      var dataContext = button.DataContext as ResultItinerary;
+      var dataContext = e.ClickedItem as ResultItinerary;
       if (dataContext != null)
       {
         await _mainPage?.SelectPlanTripDetail(dataContext.Itinerary, dataContext.References);

@@ -112,10 +112,9 @@ namespace FutarWP.Inlays
       _mainPage?.ClosePane();
     }
 
-    private async void Trip_Click(object sender, RoutedEventArgs e)
+    private async void Trip_Click(object sender, ItemClickEventArgs e)
     {
-      var button = sender as Button;
-      var trip = button.DataContext as Trip;
+      var trip = e.ClickedItem as Trip;
       await _mainPage?.SelectTrip(trip.ID);
     }
 
