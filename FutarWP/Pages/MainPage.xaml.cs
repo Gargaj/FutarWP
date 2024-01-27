@@ -286,6 +286,11 @@ namespace FutarWP.Pages
       // Add/update the rest
       foreach (var stop in stops)
       {
+        if (stop.LocationType != API.Types.Stop.LocationTypeEnum.Stop)
+        {
+          continue;
+        }
+
         MapIcon icon = null;
         var id = stop.id;
         if (!_stopIcons.ContainsKey(id))
