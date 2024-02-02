@@ -71,13 +71,13 @@ namespace FutarWP.Inlays
       foreach (var stopTime in response.data.entry.stopTimes)
       {
         var trip = Trips.FirstOrDefault(s => s.ID == stopTime.tripId);
-        if (trip?.HasElapsed ?? false)
+        if (trip?.HasPredictedArrivalElapsed ?? false)
         {
           Trips.Remove(trip);
           continue;
         }
-        var departureTime = API.Helpers.UnixTimeStampToDateTime(stopTime.departureTime);
-        if (departureTime < DateTime.Now)
+        var arrivalTime = API.Helpers.UnixTimeStampToDateTime(stopTime.predictedArrivalTime != 0 ? stopTime.predictedArrivalTime : stopTime.predictedDepartureTime);
+        if (arrivalTime < DateTime.Now)
         {
           continue;
         }
@@ -93,7 +93,7 @@ namespace FutarWP.Inlays
         var routeData = response.data.references.routes[tripData.routeId];
         trip.RouteShortName = routeData.shortName;
         trip.RouteDescription = routeData.description;
-        trip.DepartureTime = API.Helpers.UnixTimeStampToDateTime(stopTime.departureTime);
+        trip.PredictedArrivalTime = arrivalTime;
         trip.RouteBackgroundColor = routeData.style.vehicleIcon.BackgroundColor;
         trip.RouteForegroundColor = routeData.style.vehicleIcon.ForegroundColor;
         trip.Update();
@@ -137,15 +137,15 @@ namespace FutarWP.Inlays
       public string RouteDescription { get; set; }
       public string RouteBackgroundColor { get; set; }
       public string RouteForegroundColor { get; set; }
-      public DateTime DepartureTime { get; set; }
-      public bool HasElapsed => DateTime.Now > DepartureTime;
-      public string MinutesLeftString => $"{(int)(DepartureTime - DateTime.Now).TotalMinutes}min";
+      public DateTime PredictedArrivalTime { get; set; }
+      public bool HasPredictedArrivalElapsed => DateTime.Now > PredictedArrivalTime;
+      public string MinutesLeftToPredictedArrivalString => $"{(int)(PredictedArrivalTime - DateTime.Now).TotalMinutes}min";
 
       public void Update()
       {
-        OnPropertyChanged(nameof(HasElapsed));
-        OnPropertyChanged(nameof(DepartureTime));
-        OnPropertyChanged(nameof(MinutesLeftString));
+        OnPropertyChanged(nameof(HasPredictedArrivalElapsed));
+        OnPropertyChanged(nameof(PredictedArrivalTime));
+        OnPropertyChanged(nameof(MinutesLeftToPredictedArrivalString));
       }
 
       public event PropertyChangedEventHandler PropertyChanged;

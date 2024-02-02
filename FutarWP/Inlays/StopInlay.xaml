@@ -47,7 +47,7 @@
             <Border Width="50" Padding="2" Margin="0,0,5,0" Background="{Binding RouteBackgroundColor}">
               <TextBlock Text="{Binding RouteShortName}" TextAlignment="Center" FontWeight="Bold" Foreground="{Binding RouteForegroundColor}"/>
             </Border>
-            <TextBlock Text="{Binding MinutesLeftString}" VerticalAlignment="Center" Width="50"/>
+            <TextBlock Text="{Binding MinutesLeftToPredictedArrivalString}" VerticalAlignment="Center" Width="50"/>
             <TextBlock Text="{Binding RouteDescription}" VerticalAlignment="Center"/>
           </StackPanel>
         </DataTemplate>
