@@ -31,7 +31,7 @@ namespace FutarWP.Pages
     private Geoposition _locationInfo;
     private Geolocator _geolocator = null;
     private bool _mapReady = false;
-    private bool _mapReset = false;
+    private bool _mapMovedToGeolocation = false;
     private RequestManager _vehicleUpdate = new RequestManager(RequestManager.Strategy.Continuous);
     private RequestManager _stopUpdate = new RequestManager(RequestManager.Strategy.Throttled);
     private Dictionary<string, MapIcon> _vehicleIcons = new Dictionary<string, MapIcon>();
@@ -193,12 +193,20 @@ namespace FutarWP.Pages
 
     private void Map_ZoomLevelChanged(MapControl sender, object args)
     {
+      if (!_mapReady)
+      {
+        return;
+      }
       _vehicleUpdate.Request();
       _stopUpdate.Request();
     }
 
     private void Map_CenterChanged(MapControl sender, object args)
     {
+      if (!_mapReady)
+      {
+        return;
+      }
       _vehicleUpdate.Request();
       _stopUpdate.Request();
     }
@@ -573,11 +581,11 @@ namespace FutarWP.Pages
     {
       await Dispatcher.RunAsync(Windows.UI.Core.CoreDispatcherPriority.Normal, () =>
       {
-        if (!_mapReset)
+        if (!_mapMovedToGeolocation)
         {
           map.Center = new Geopoint(args.Position.Coordinate.Point.Position);
           map.ZoomLevel = 18.0f;
-          _mapReset = true;
+          _mapMovedToGeolocation = true;
         }
         _locationInfo = args.Position;
         _locationIcon.Location = new Geopoint(args.Position.Coordinate.Point.Position);
