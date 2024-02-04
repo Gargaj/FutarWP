@@ -35,6 +35,7 @@ namespace FutarWP.Inlays
     public string RouteShortName { get; set; }
     public string RouteDescription { get; set; }
     public ObservableCollection<Stop> Stops { get; set; }
+    public bool IsLoading { get; set; }
 
     public void Flush()
     {
@@ -61,11 +62,17 @@ namespace FutarWP.Inlays
         return;
       }
 
+      IsLoading = true;
+      OnPropertyChanged(nameof(IsLoading));
+
       var response = await _app.Client.GetAsync<API.Response<API.Commands.TripDetailsEntry>>(new API.Commands.TripDetails()
       {
         tripId = TripID,
         date = DateTime.Now.ToString("yyyyMMdd")
       });
+
+      IsLoading = false;
+      OnPropertyChanged(nameof(IsLoading));
 
       var entry = response?.data?.entry;
       if (entry == null)

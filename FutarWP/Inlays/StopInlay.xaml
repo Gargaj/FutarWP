@@ -32,7 +32,29 @@
       <FontIcon Glyph="&#xE711;" FontSize="12"/>
     </Button>
 
+    <ProgressRing Grid.Row="1" Grid.ColumnSpan="2" Width="64" Height="64" HorizontalAlignment="Center" IsActive="{Binding IsLoading}"/>
+    <TextBlock Grid.Row="1" Grid.ColumnSpan="2" Margin="10">
+      <Run Text="No trips found for the next"/>
+      <Run Text="{Binding MinutesAfter}"/>
+      <Run Text="minutes"/>
+      <i:Interaction.Behaviors>
+        <c:DataTriggerBehavior Binding="{Binding Trips.Count}" Value="0">
+          <c:ChangePropertyAction PropertyName="Visibility" Value="Visible" />
+        </c:DataTriggerBehavior>
+        <c:DataTriggerBehavior Binding="{Binding Trips.Count}" Value="0" ComparisonCondition="NotEqual">
+          <c:ChangePropertyAction PropertyName="Visibility" Value="Collapsed" />
+        </c:DataTriggerBehavior>
+      </i:Interaction.Behaviors>
+    </TextBlock>
     <ListView Grid.Row="1" Grid.ColumnSpan="2" ItemsSource="{Binding Trips}" ItemClick="Trip_Click" IsItemClickEnabled="True">
+      <i:Interaction.Behaviors>
+        <c:DataTriggerBehavior Binding="{Binding Trips.Count}" Value="0">
+          <c:ChangePropertyAction PropertyName="Visibility" Value="Collapsed" />
+        </c:DataTriggerBehavior>
+        <c:DataTriggerBehavior Binding="{Binding Trips.Count}" Value="0" ComparisonCondition="NotEqual">
+          <c:ChangePropertyAction PropertyName="Visibility" Value="Visible" />
+        </c:DataTriggerBehavior>
+      </i:Interaction.Behaviors>
       <ListView.ItemContainerStyle>
         <Style TargetType="ListViewItem">
           <Setter Property="Margin" Value="5,5,0,0"/>

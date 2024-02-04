@@ -11,6 +11,8 @@ namespace FutarWP.Inlays
 {
   public partial class StopInlay : UserControl, INotifyPropertyChanged
   {
+    private readonly uint _minutesBefore = 10;
+    private readonly uint _minutesAfter = 60;
     private App _app;
     private Pages.MainPage _mainPage;
 
@@ -27,6 +29,8 @@ namespace FutarWP.Inlays
 
     public string StopID { get; set; }
     public string StopName { get; set; }
+    public uint MinutesAfter => _minutesAfter;
+    public bool IsLoading { get; set; } = false;
     public ObservableCollection<Trip> Trips { get; set; }
 
     public void Flush()
@@ -46,13 +50,19 @@ namespace FutarWP.Inlays
         return;
       }
 
+      IsLoading = true;
+      OnPropertyChanged(nameof(IsLoading));
+
       var response = await _app.Client.GetAsync<API.Response<API.Commands.ArrivalsAndDeparturesForStopEntry>>(new API.Commands.ArrivalsAndDeparturesForStop()
       {
         stopId = StopID,
-        minutesBefore = 30,
-        minutesAfter = 60,
+        minutesBefore = _minutesBefore,
+        minutesAfter = _minutesAfter,
         includeReferences = new List<string>() { "agencies", "routes", "trips", "stops", "stations" },
       });
+
+      IsLoading = false;
+      OnPropertyChanged(nameof(IsLoading));
 
       var entry = response?.data?.entry;
       if (entry == null)

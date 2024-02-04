@@ -32,6 +32,8 @@
     <Button Grid.Row="0" Grid.Column="1" Click="ClosePane_Click" Background="Transparent">
       <FontIcon Glyph="&#xE711;" FontSize="12"/>
     </Button>
+
+    <ProgressRing Grid.Row="1" Grid.ColumnSpan="2" Width="64" Height="64" HorizontalAlignment="Center" IsActive="{Binding IsLoading}"/>
     <ListView Grid.Row="1" Grid.ColumnSpan="2" ItemsSource="{Binding Stops}" ItemClick="Stop_Click" IsItemClickEnabled="True">
       <ListView.ItemContainerStyle>
         <Style TargetType="ListViewItem">
