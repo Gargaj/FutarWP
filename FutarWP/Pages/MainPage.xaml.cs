@@ -191,24 +191,20 @@ namespace FutarWP.Pages
       }
     }
 
-    private void Map_ZoomLevelChanged(MapControl sender, object args)
-    {
-      if (!_mapReady)
-      {
-        return;
-      }
-      _vehicleUpdate.Request();
-      _stopUpdate.Request();
-    }
+    private void Map_ZoomLevelChanged(MapControl sender, object args) => OnMapChange();
+    private void Map_CenterChanged(MapControl sender, object args) => OnMapChange();
 
-    private void Map_CenterChanged(MapControl sender, object args)
+    private void OnMapChange()
     {
       if (!_mapReady)
       {
         return;
       }
       _vehicleUpdate.Request();
-      _stopUpdate.Request();
+      if (map.ZoomLevel >= StopsMinZoomLevel)
+      {
+        _stopUpdate.Request();
+      }
     }
 
     private async void _vehicleUpdate_Tick(object sender, object e)
@@ -442,6 +438,7 @@ namespace FutarWP.Pages
           });
           await map.TrySetViewBoundsAsync(bb, null, MapAnimationKind.None);
           _mapReady = true;
+          OnMapChange();
         }
       }
       catch (Exception ex)
@@ -586,6 +583,7 @@ namespace FutarWP.Pages
           map.Center = new Geopoint(args.Position.Coordinate.Point.Position);
           map.ZoomLevel = 18.0f;
           _mapMovedToGeolocation = true;
+          OnMapChange();
         }
         _locationInfo = args.Position;
         _locationIcon.Location = new Geopoint(args.Position.Coordinate.Point.Position);
