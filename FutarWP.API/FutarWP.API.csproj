@@ -121,6 +121,7 @@
   </PropertyGroup>
   <ItemGroup>
     <Compile Include="Client.cs" />
+    <Compile Include="Commands\ScheduleForStop.cs" />
     <Compile Include="Commands\ArrivalsAndDeparturesForStop.cs" />
     <Compile Include="Commands\Geocode.cs" />
     <Compile Include="Commands\Metadata.cs" />
@@ -130,6 +131,7 @@
     <Compile Include="Types\Agency.cs" />
     <Compile Include="Types\LatLon.cs" />
     <Compile Include="Types\Polyline.cs" />
+    <Compile Include="Types\Schedule.cs" />
     <Compile Include="Types\StopTime.cs" />
     <Compile Include="Types\Style.cs" />
     <Compile Include="Types\Vehicle.cs" />

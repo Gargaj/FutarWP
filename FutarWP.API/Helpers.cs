@@ -30,6 +30,7 @@ namespace FutarWP.API
       return dateTime;
     }
 
+    // https://developers.google.com/maps/documentation/utilities/polylinealgorithm
     public static List<BasicGeoposition> DecodePolylineString(string str)
     {
       var output = new List<BasicGeoposition>();

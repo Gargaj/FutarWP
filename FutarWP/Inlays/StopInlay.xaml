@@ -33,48 +33,127 @@
     </Button>
 
     <ProgressRing Grid.Row="1" Grid.ColumnSpan="2" Width="64" Height="64" HorizontalAlignment="Center" IsActive="{Binding IsLoading}"/>
-    <TextBlock Grid.Row="1" Grid.ColumnSpan="2" Margin="10">
-      <Run Text="No trips found for the next"/>
-      <Run Text="{Binding MinutesAfter}"/>
-      <Run Text="minutes"/>
-      <i:Interaction.Behaviors>
-        <c:DataTriggerBehavior Binding="{Binding Trips.Count}" Value="0">
-          <c:ChangePropertyAction PropertyName="Visibility" Value="Visible" />
-        </c:DataTriggerBehavior>
-        <c:DataTriggerBehavior Binding="{Binding Trips.Count}" Value="0" ComparisonCondition="NotEqual">
-          <c:ChangePropertyAction PropertyName="Visibility" Value="Collapsed" />
-        </c:DataTriggerBehavior>
-      </i:Interaction.Behaviors>
-    </TextBlock>
-    <ListView Grid.Row="1" Grid.ColumnSpan="2" ItemsSource="{Binding Trips}" ItemClick="Trip_Click" IsItemClickEnabled="True">
-      <i:Interaction.Behaviors>
-        <c:DataTriggerBehavior Binding="{Binding Trips.Count}" Value="0">
-          <c:ChangePropertyAction PropertyName="Visibility" Value="Collapsed" />
-        </c:DataTriggerBehavior>
-        <c:DataTriggerBehavior Binding="{Binding Trips.Count}" Value="0" ComparisonCondition="NotEqual">
-          <c:ChangePropertyAction PropertyName="Visibility" Value="Visible" />
-        </c:DataTriggerBehavior>
-      </i:Interaction.Behaviors>
-      <ListView.ItemContainerStyle>
-        <Style TargetType="ListViewItem">
-          <Setter Property="Margin" Value="5,5,0,0"/>
-          <Setter Property="Padding" Value="0"/>
-          <Setter Property="HorizontalContentAlignment" Value="Stretch"/>
-          <Setter Property="MinHeight" Value="0"/>
-        </Style>
-      </ListView.ItemContainerStyle>
-      <ListView.ItemTemplate>
+    <Pivot Grid.Row="1" Grid.ColumnSpan="2" PivotItemLoading="Pivot_PivotItemLoading" SelectedItem="{Binding SelectedPanel, Mode=TwoWay}">
+      <Pivot.HeaderTemplate>
         <DataTemplate>
-          <StackPanel Orientation="Horizontal">
-            <Border Width="50" Padding="2" Margin="0,0,5,0" Background="{Binding RouteBackgroundColor}">
-              <TextBlock Text="{Binding RouteShortName}" TextAlignment="Center" FontWeight="Bold" Foreground="{Binding RouteForegroundColor}"/>
-            </Border>
-            <TextBlock Text="{Binding MinutesLeftToPredictedArrivalString}" VerticalAlignment="Center" Width="50"/>
-            <TextBlock Text="{Binding RouteDescription}" VerticalAlignment="Center"/>
-          </StackPanel>
+          <TextBlock Text="{Binding}" FontSize="14" FontWeight="Bold"/>
         </DataTemplate>
-      </ListView.ItemTemplate>
-    </ListView>
+      </Pivot.HeaderTemplate>
+      
+      <PivotItem Header="Trips">
+        <Grid>
+          <TextBlock>
+            <Run Text="No trips found for the next"/>
+            <Run Text="{Binding MinutesAfter}"/>
+            <Run Text="minutes"/>
+            <i:Interaction.Behaviors>
+              <c:DataTriggerBehavior Binding="{Binding Trips.Count}" Value="0">
+                <c:ChangePropertyAction PropertyName="Visibility" Value="Visible" />
+              </c:DataTriggerBehavior>
+              <c:DataTriggerBehavior Binding="{Binding Trips.Count}" Value="0" ComparisonCondition="NotEqual">
+                <c:ChangePropertyAction PropertyName="Visibility" Value="Collapsed" />
+              </c:DataTriggerBehavior>
+            </i:Interaction.Behaviors>
+          </TextBlock>
+          <ListView Grid.Row="1" Grid.ColumnSpan="2" ItemsSource="{Binding Trips}" ItemClick="Trip_Click" IsItemClickEnabled="True">
+            <i:Interaction.Behaviors>
+              <c:DataTriggerBehavior Binding="{Binding Trips.Count}" Value="0">
+                <c:ChangePropertyAction PropertyName="Visibility" Value="Collapsed" />
+              </c:DataTriggerBehavior>
+              <c:DataTriggerBehavior Binding="{Binding Trips.Count}" Value="0" ComparisonCondition="NotEqual">
+                <c:ChangePropertyAction PropertyName="Visibility" Value="Visible" />
+              </c:DataTriggerBehavior>
+            </i:Interaction.Behaviors>
+            <ListView.ItemContainerStyle>
+              <Style TargetType="ListViewItem">
+                <Setter Property="Margin" Value="0,5,0,0"/>
+                <Setter Property="Padding" Value="0"/>
+                <Setter Property="HorizontalContentAlignment" Value="Stretch"/>
+                <Setter Property="MinHeight" Value="0"/>
+              </Style>
+            </ListView.ItemContainerStyle>
+            <ListView.ItemTemplate>
+              <DataTemplate>
+                <StackPanel Orientation="Horizontal">
+                  <Border Width="50" Padding="2" Margin="0,0,5,0" Background="{Binding RouteBackgroundColor}">
+                    <TextBlock Text="{Binding RouteShortName}" TextAlignment="Center" FontWeight="Bold" Foreground="{Binding RouteForegroundColor}"/>
+                  </Border>
+                  <TextBlock Text="{Binding MinutesLeftToPredictedArrivalString}" VerticalAlignment="Center" Width="50"/>
+                  <TextBlock Text="{Binding RouteDescription}" VerticalAlignment="Center"/>
+                </StackPanel>
+              </DataTemplate>
+            </ListView.ItemTemplate>
+          </ListView>
+        </Grid>
+      </PivotItem>
+      
+      <PivotItem Header="Schedules">
+        <Pivot ItemsSource="{Binding Schedules}">
+          <Pivot.HeaderTemplate>
+            <DataTemplate>
+              <Border Padding="5,2" Background="{Binding RouteBackgroundColor}">
+                <TextBlock FontSize="12" Text="{Binding RouteShortName}" TextAlignment="Center" FontWeight="Bold" Foreground="{Binding RouteForegroundColor}"/>
+              </Border>
+            </DataTemplate>
+          </Pivot.HeaderTemplate>
+          <Pivot.ItemTemplate>
+            <DataTemplate>
 
+              <ListView ItemsSource="{Binding ScheduleHours}">
+                <ListView.ItemContainerStyle>
+                  <Style TargetType="ListViewItem">
+                    <Setter Property="Margin" Value="0,0,0,0"/>
+                    <Setter Property="Padding" Value="0"/>
+                    <Setter Property="HorizontalContentAlignment" Value="Stretch"/>
+                    <Setter Property="MinWidth" Value="0"/>
+                    <Setter Property="MinHeight" Value="0"/>
+                  </Style>
+                </ListView.ItemContainerStyle>
+                <ListView.ItemTemplate>
+                  <DataTemplate>
+                    <StackPanel Orientation="Horizontal">
+                      <TextBlock FontWeight="Bold" Text="{Binding Key}" Width="25" Height="25" TextAlignment="Center"/>
+                      <ListView ItemsSource="{Binding}">
+                        <ListView.ItemContainerStyle>
+                          <Style TargetType="ListViewItem">
+                            <Setter Property="Margin" Value="0,0,0,0"/>
+                            <Setter Property="Padding" Value="0"/>
+                            <Setter Property="HorizontalContentAlignment" Value="Stretch"/>
+                            <Setter Property="MinWidth" Value="0"/>
+                            <Setter Property="MinHeight" Value="0"/>
+                          </Style>
+                        </ListView.ItemContainerStyle>
+                        <ListView.ItemsPanel>
+                          <ItemsPanelTemplate>
+                            <StackPanel Orientation="Horizontal"/>
+                          </ItemsPanelTemplate>
+                        </ListView.ItemsPanel>
+                        <ListView.ItemTemplate>
+                          <DataTemplate>
+                            <TextBlock Text="{Binding DepartureTime.Minute}" Width="25" Height="25" TextAlignment="Center">
+                              <i:Interaction.Behaviors>
+                                <c:DataTriggerBehavior Binding="{Binding IsDepartureTimePassed}" Value="True">
+                                  <c:ChangePropertyAction PropertyName="Opacity" Value="0.5" />
+                                </c:DataTriggerBehavior>
+                                <c:DataTriggerBehavior Binding="{Binding IsDepartureTimePassed}" Value="False">
+                                  <c:ChangePropertyAction PropertyName="Opacity" Value="1.0" />
+                                </c:DataTriggerBehavior>
+                              </i:Interaction.Behaviors>
+                            </TextBlock>
+                          </DataTemplate>
+                        </ListView.ItemTemplate>
+                      </ListView>
+                    </StackPanel>
+                  </DataTemplate>
+                </ListView.ItemTemplate>
+              </ListView>
+
+            </DataTemplate>
+          </Pivot.ItemTemplate>
+
+        </Pivot>
+        
+      </PivotItem>
+    </Pivot>
   </Grid>
 </UserControl>

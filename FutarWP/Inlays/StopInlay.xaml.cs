@@ -4,6 +4,8 @@ using System.Collections.ObjectModel;
 using System.ComponentModel;
 using System.Linq;
 using System.Threading.Tasks;
+using FutarWP.API;
+using FutarWP.API.Commands;
 using Windows.UI.Xaml;
 using Windows.UI.Xaml.Controls;
 
@@ -30,13 +32,20 @@ namespace FutarWP.Inlays
     public string StopID { get; set; }
     public string StopName { get; set; }
     public uint MinutesAfter => _minutesAfter;
+
+    public Response<ScheduleForStopEntry> ResponseSchedule { get; set; }
     public bool IsLoading { get; set; } = false;
     public ObservableCollection<Trip> Trips { get; set; }
+    public PivotItem SelectedPanel { get; set; }
+    public List<Schedule> Schedules { get; private set; }
 
     public void Flush()
     {
       StopID = string.Empty;
-      
+
+      ResponseSchedule = null;
+      OnPropertyChanged(nameof(ResponseSchedule));
+
       StopName = string.Empty;
       OnPropertyChanged(nameof(StopName));
       Trips.Clear();
@@ -50,6 +59,18 @@ namespace FutarWP.Inlays
         return;
       }
 
+      if (SelectedPanel?.Header.ToString() == "Trips")
+      {
+        await RefreshTrips();
+      }
+      else
+      {
+        await RefreshSchedule();
+      }
+    }
+
+    public async Task RefreshTrips()
+    {
       IsLoading = true;
       OnPropertyChanged(nameof(IsLoading));
 
@@ -112,6 +133,36 @@ namespace FutarWP.Inlays
       OnPropertyChanged(nameof(Trips));
     }
 
+    public async Task RefreshSchedule()
+    {
+      if (ResponseSchedule == null)
+      {
+        IsLoading = true;
+        OnPropertyChanged(nameof(IsLoading));
+
+        ResponseSchedule = await _app.Client.GetAsync<API.Response<API.Commands.ScheduleForStopEntry>>(new API.Commands.ScheduleForStop()
+        {
+          stopId = StopID,
+        });
+
+        IsLoading = false;
+        OnPropertyChanged(nameof(IsLoading));
+
+        var entry = ResponseSchedule?.data?.entry;
+        if (entry == null)
+        {
+          return;
+        }
+
+        Schedules = entry?.schedules.Select(s => new Schedule(this, s)).ToList();
+        OnPropertyChanged(nameof(Schedules));
+      }
+      else
+      {
+        Schedules.ForEach(s => s.Update());
+      }
+    }
+
     private void StopInlay_Loaded(object sender, RoutedEventArgs e)
     {
       _mainPage = _app.GetCurrentFrame<Pages.MainPage>();
@@ -126,6 +177,11 @@ namespace FutarWP.Inlays
     {
       var trip = e.ClickedItem as Trip;
       await _mainPage?.SelectTrip(trip.ID);
+    }
+
+    private async void Pivot_PivotItemLoading(Pivot sender, PivotItemEventArgs args)
+    {
+      await Refresh();
     }
 
     public event PropertyChangedEventHandler PropertyChanged;
@@ -156,6 +212,33 @@ namespace FutarWP.Inlays
         OnPropertyChanged(nameof(HasPredictedArrivalElapsed));
         OnPropertyChanged(nameof(PredictedArrivalTime));
         OnPropertyChanged(nameof(MinutesLeftToPredictedArrivalString));
+      }
+
+      public event PropertyChangedEventHandler PropertyChanged;
+
+      public virtual void OnPropertyChanged(string propertyName)
+      {
+        PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
+      }
+    }
+
+    public class Schedule : INotifyPropertyChanged
+    {
+      private StopInlay _parent;
+      private API.Types.Schedule _schedule;
+      public Schedule(StopInlay parent, API.Types.Schedule schedule)
+      {
+        _parent = parent;
+        _schedule = schedule;
+      }
+      public string RouteBackgroundColor => _parent.ResponseSchedule.data.references.routes[_schedule.routeId].style.vehicleIcon.BackgroundColor;
+      public string RouteForegroundColor => _parent.ResponseSchedule.data.references.routes[_schedule.routeId].style.vehicleIcon.ForegroundColor;
+      public string RouteShortName => _parent.ResponseSchedule.data.references.routes[_schedule.routeId].shortName;
+      public IEnumerable<IGrouping<int, API.Types.StopTime>> ScheduleHours => _schedule.directions.FirstOrDefault().stopTimes.GroupBy(s => s.DepartureTime.Hour).OrderBy(s => s.Key);
+
+      public void Update()
+      {
+        OnPropertyChanged(nameof(ScheduleHours));
       }
 
       public event PropertyChangedEventHandler PropertyChanged;
