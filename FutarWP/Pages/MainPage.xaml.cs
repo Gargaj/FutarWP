@@ -60,6 +60,12 @@ namespace FutarWP.Pages
       _stopUpdate.Tick += _stopUpdate_Tick;
       _stopUpdate.PeriodicInterval = TimeSpan.FromSeconds(10);
 
+      map.Center = new Geopoint(new BasicGeoposition()
+      {
+        Latitude = 47.4927567,
+        Longitude = 19.0632442,
+      });
+      map.ZoomLevel = 11;
       map.MapServiceToken = BingCredentials.BingAPIMapKey;
       map.MapElementClick += Map_MapElementClick;
       map.CenterChanged += Map_CenterChanged;
@@ -423,23 +429,7 @@ namespace FutarWP.Pages
           return;
         }
 
-        var response = await _app.Client.GetAsync<API.Response<API.Commands.MetadataEntry>>(new API.Commands.Metadata());
-        var entry = response?.data?.entry;
-        if (entry != null)
-        {
-          var bb = new GeoboundingBox(new BasicGeoposition()
-          {
-            Latitude = entry.upperRightLatitude,
-            Longitude = entry.lowerLeftLongitude,
-          }, new BasicGeoposition()
-          {
-            Latitude = entry.lowerLeftLatitude,
-            Longitude = entry.upperRightLongitude,
-          });
-          await map.TrySetViewBoundsAsync(bb, null, MapAnimationKind.None);
-          _mapReady = true;
-          OnMapChange();
-        }
+        //await FindMapCenterFromMetadata();
       }
       catch (Exception ex)
       {
@@ -470,6 +460,28 @@ namespace FutarWP.Pages
       });
     }
 
+    protected async Task FindMapCenterFromMetadata()
+    {
+      var response = await _app.Client.GetAsync<API.Response<API.Commands.MetadataEntry>>(new API.Commands.Metadata());
+      var entry = response?.data?.entry;
+      if (entry == null)
+      {
+        return;
+      }
+      var bb = new GeoboundingBox(new BasicGeoposition()
+      {
+        Latitude = entry.upperRightLatitude,
+        Longitude = entry.lowerLeftLongitude,
+      }, new BasicGeoposition()
+      {
+        Latitude = entry.lowerLeftLatitude,
+        Longitude = entry.upperRightLongitude,
+      });
+      await map.TrySetViewBoundsAsync(bb, null, MapAnimationKind.None);
+      _mapReady = true;
+      OnMapChange();
+    }
+  
     protected override void OnNavigatedFrom(NavigationEventArgs e)
     {
       base.OnNavigatedFrom(e);

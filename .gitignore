@@ -3,5 +3,6 @@ bin/
 obj/
 AppPackages/
 BundleArtifacts/
+*.user
 
 FutarWP/BingAPIKey.cs
