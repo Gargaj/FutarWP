@@ -107,8 +107,29 @@ namespace FutarWP.Inlays
           Trips.Remove(trip);
           continue;
         }
-        var arrivalTime = API.Helpers.UnixTimeStampToDateTime(stopTime.predictedArrivalTime != 0 ? stopTime.predictedArrivalTime : stopTime.predictedDepartureTime);
-        if (arrivalTime < DateTime.Now)
+        ulong timestamp = 0;
+        if (stopTime.predictedArrivalTime != 0)
+        {
+          timestamp = stopTime.predictedArrivalTime;
+        }
+        else if (stopTime.arrivalTime != 0)
+        {
+          timestamp = stopTime.arrivalTime;
+        }
+        else if (stopTime.predictedDepartureTime != 0)
+        {
+          timestamp = stopTime.predictedDepartureTime;
+        }
+        else if (stopTime.departureTime != 0)
+        {
+          timestamp = stopTime.departureTime;
+        }
+        if (timestamp == 0)
+        {
+          return;
+        }
+        var time = API.Helpers.UnixTimeStampToDateTime(timestamp);
+        if (time < DateTime.Now)
         {
           continue;
         }
@@ -124,7 +145,7 @@ namespace FutarWP.Inlays
         var routeData = response.data.references.routes[tripData.routeId];
         trip.RouteShortName = routeData.shortName;
         trip.RouteDescription = routeData.description;
-        trip.PredictedArrivalTime = arrivalTime;
+        trip.PredictedArrivalTime = time;
         trip.RouteBackgroundColor = routeData.style.vehicleIcon.BackgroundColor;
         trip.RouteForegroundColor = routeData.style.vehicleIcon.ForegroundColor;
         trip.Update();
