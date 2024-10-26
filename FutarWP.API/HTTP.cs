@@ -15,8 +15,10 @@ namespace FutarWP.API
 
     public async Task<MemoryStream> DoHTTPRequestStreamAsync(string url, byte[] data, NameValueCollection headers = null, string method = "POST", Func<long, long, bool> callback = null)
     {
-      var httpClient = new System.Net.Http.HttpClient();
-
+      var httpClient = new System.Net.Http.HttpClient(new System.Net.Http.HttpClientHandler
+      {
+        AutomaticDecompression = DecompressionMethods.GZip | DecompressionMethods.Deflate
+      });
       httpClient.Timeout = TimeSpan.FromSeconds(5);
       System.Net.Http.HttpResponseMessage response = null;
       try
@@ -24,6 +26,16 @@ namespace FutarWP.API
         if (method == "GET")
         {
           response = await httpClient.GetAsync(url);
+        }
+        else if (method == "POST")
+        {
+          var content = new System.Net.Http.ByteArrayContent(data);
+          if (headers["Content-Type"] != null)
+          {
+            var types = headers["Content-Type"].Split(';');
+            content.Headers.ContentType = new System.Net.Http.Headers.MediaTypeHeaderValue(types[0]);
+          }
+          response = await httpClient.PostAsync(url,content);
         }
       }
       catch (TaskCanceledException)
