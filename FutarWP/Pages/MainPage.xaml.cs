@@ -430,6 +430,8 @@ namespace FutarWP.Pages
         }
 
         //await FindMapCenterFromMetadata();
+        _mapReady = true;
+        OnMapChange();
       }
       catch (Exception ex)
       {
@@ -478,8 +480,6 @@ namespace FutarWP.Pages
         Longitude = entry.upperRightLongitude,
       });
       await map.TrySetViewBoundsAsync(bb, null, MapAnimationKind.None);
-      _mapReady = true;
-      OnMapChange();
     }
   
     protected override void OnNavigatedFrom(NavigationEventArgs e)
