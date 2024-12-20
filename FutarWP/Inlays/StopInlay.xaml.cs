@@ -144,7 +144,7 @@ namespace FutarWP.Inlays
         var tripData = response.data.references.trips[stopTime.tripId];
         var routeData = response.data.references.routes[tripData.routeId];
         trip.RouteShortName = routeData.shortName;
-        trip.RouteDescription = routeData.description;
+        trip.RouteDescription = $"{routeData.description} (\u25B6 {tripData.tripHeadsign})";
         trip.PredictedArrivalTime = time;
         trip.RouteBackgroundColor = routeData.style.vehicleIcon.BackgroundColor;
         trip.RouteForegroundColor = routeData.style.vehicleIcon.ForegroundColor;
