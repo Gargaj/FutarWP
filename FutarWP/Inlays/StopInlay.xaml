@@ -130,7 +130,7 @@
                         </ListView.ItemsPanel>
                         <ListView.ItemTemplate>
                           <DataTemplate>
-                            <TextBlock Text="{Binding DepartureTime.Minute}" Width="25" Height="25" TextAlignment="Center">
+                            <Button Content="{Binding DepartureTime.Minute}" Width="25" Height="25" Background="Transparent" Click="ScheduleItem_Click" Padding="0">
                               <i:Interaction.Behaviors>
                                 <c:DataTriggerBehavior Binding="{Binding IsDepartureTimePassed}" Value="True">
                                   <c:ChangePropertyAction PropertyName="Opacity" Value="0.5" />
@@ -139,7 +139,7 @@
                                   <c:ChangePropertyAction PropertyName="Opacity" Value="1.0" />
                                 </c:DataTriggerBehavior>
                               </i:Interaction.Behaviors>
-                            </TextBlock>
+                            </Button>
                           </DataTemplate>
                         </ListView.ItemTemplate>
                       </ListView>

@@ -205,6 +205,16 @@ namespace FutarWP.Inlays
       await Refresh();
     }
 
+    private async void ScheduleItem_Click(object sender, RoutedEventArgs e)
+    {
+      var button = sender as Button;
+      var stopTime = button?.DataContext as API.Types.StopTime;
+      if (stopTime != null)
+      {
+        await _mainPage?.SelectTrip(stopTime.tripId);
+      }
+    }
+
     public event PropertyChangedEventHandler PropertyChanged;
 
     public virtual void OnPropertyChanged(string propertyName)
@@ -252,6 +262,7 @@ namespace FutarWP.Inlays
         _parent = parent;
         _schedule = schedule;
       }
+      public API.Types.Schedule ScheduleData => _schedule;
       public string RouteBackgroundColor => _parent.ResponseSchedule.data.references.routes[_schedule.routeId].style.vehicleIcon.BackgroundColor;
       public string RouteForegroundColor => _parent.ResponseSchedule.data.references.routes[_schedule.routeId].style.vehicleIcon.ForegroundColor;
       public string RouteShortName => _parent.ResponseSchedule.data.references.routes[_schedule.routeId].shortName;
