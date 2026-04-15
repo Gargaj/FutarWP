@@ -155,7 +155,7 @@ namespace FutarWP.Inlays
       public string Subtitle { get; set; }
       public double Latitude { get; set; }
       public double Longitude { get; set; }
-      public uint Score { get; set; }
+      public int Score { get; set; }
     }
 
     public event PropertyChangedEventHandler PropertyChanged;

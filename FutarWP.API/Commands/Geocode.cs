@@ -31,7 +31,7 @@ namespace FutarWP.API.Commands
     {
       public string id;
       public string stopId;
-      public uint score;
+      public int score;
     }
 
     public class Places
@@ -50,7 +50,7 @@ namespace FutarWP.API.Commands
       public double lat;
       public double lon;
       public List<string> routeIds;
-      public uint score;
+      public int score;
       public string type;
       public string locationSubType;
       public string vertex;
@@ -74,7 +74,7 @@ namespace FutarWP.API.Commands
       public string type;
       public string mainTitle;
       public string subTitle;
-      public uint score;
+      public int score;
     }
   }
 }
