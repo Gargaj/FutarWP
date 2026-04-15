@@ -110,7 +110,7 @@
                 <Run Text="("/><Run Text="{Binding DurationInMinutes}"/>
                 <Run Text="minutes)"/>
               </TextBlock>
-              <ListView Grid.Row="1" ItemsSource="{Binding Legs}" IsItemClickEnabled="False">
+              <ListView Grid.Row="1" ItemsSource="{Binding Legs}" IsItemClickEnabled="False" IsHitTestVisible="False">
                 <ListView.ItemContainerStyle>
                   <Style TargetType="ListViewItem">
                     <Setter Property="Margin" Value="0"/>
