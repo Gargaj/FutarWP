@@ -14,6 +14,8 @@ namespace FutarWP.API
     private string _apiKey;
     private string _appVersion;
     private readonly string _version = "4";
+    //private const string _rootURL = "https://futar.bkk.hu/";
+    private const string _rootURL = "https://utas.hu/";
 
     private Settings _settings = new Settings();
     private Newtonsoft.Json.JsonSerializerSettings _deserializerSettings = new Newtonsoft.Json.JsonSerializerSettings()
@@ -30,7 +32,7 @@ namespace FutarWP.API
     public async Task<bool> ScrapeCredentials()
     {
       var http = new HTTP();
-      var pageData = await http.DoGETRequestAsync("https://futar.bkk.hu/");
+      var pageData = await http.DoGETRequestAsync(_rootURL);
 
       var versionRegex = new System.Text.RegularExpressions.Regex(@"\/ride-gui\/(.*?)/");
       var match = versionRegex.Match(pageData);
@@ -40,7 +42,7 @@ namespace FutarWP.API
       }
       _appVersion = match.Groups[1].Value.ToString();
 
-      var configRegex = new System.Text.RegularExpressions.Regex(@"window\.APP_CONFIG = (.*?);");
+      var configRegex = new System.Text.RegularExpressions.Regex(@"window\.APP_CONFIG = (.*?);window\.");
       match = configRegex.Match(pageData);
       if (!match.Success)
       {
@@ -72,7 +74,7 @@ namespace FutarWP.API
     {
       var http = new HTTP();
 
-      var url = $"https://futar.bkk.hu/api" + input.CommandURL;
+      var url = $"{_rootURL}api{input.CommandURL}";
       string responseJson = null;
       string bodyJson = string.Empty;
       var headers = new NameValueCollection();

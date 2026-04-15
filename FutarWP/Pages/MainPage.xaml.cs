@@ -65,8 +65,10 @@ namespace FutarWP.Pages
         Latitude = 47.4927567,
         Longitude = 19.0632442,
       });
+      map.TileSources.Clear();
+      //map.TileSources.Add(new MapTileSource(new HttpMapTileDataSource("http://livemap-tiles4.waze.com/tiles/{zoomlevel}/{x}/{y}.png")));
+      //map.TileSources.Add(new MapTileSource(new HttpMapTileDataSource("https://tile.openstreetmap.org/{zoomlevel}/{x}/{y}.png")));
       map.ZoomLevel = 11;
-      map.MapServiceToken = BingCredentials.BingAPIMapKey;
       map.MapElementClick += Map_MapElementClick;
       map.CenterChanged += Map_CenterChanged;
       map.ZoomLevelChanged += Map_ZoomLevelChanged;
