@@ -23,7 +23,7 @@ namespace FutarWP.API.Commands
     public string query;
     public List<string> routeIds;
     public List<Stop> stopIds;
-    public List<string> alertIds;
+    public List<Alert> alertIds;
     public Places places;
     public List<string> vehicles;
 
@@ -31,6 +31,13 @@ namespace FutarWP.API.Commands
     {
       public string id;
       public string stopId;
+      public int score;
+    }
+
+    public class Alert
+    {
+      public string id;
+      public string alertId;
       public int score;
     }
 
