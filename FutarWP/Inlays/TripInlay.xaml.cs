@@ -11,7 +11,12 @@ using Windows.UI.Xaml.Controls.Maps;
 
 namespace FutarWP.Inlays
 {
-  public partial class TripInlay : UserControl, INotifyPropertyChanged
+  public interface ITripProvider
+  {
+    uint GetStopSequenceIndex(string tripID);
+  }
+
+  public partial class TripInlay : UserControl, INotifyPropertyChanged, ITripProvider
   {
     private App _app;
     private Pages.MainPage _mainPage;
@@ -29,13 +34,15 @@ namespace FutarWP.Inlays
     }
 
     public string TripID { get; set; }
-    public MapIcon MapElement { get; set; }
+    public MapIcon VehicleIcon { get; set; }
     public string IconURL { get; set; }
     public uint StopSequenceIndex { get; set; }
     public string RouteShortName { get; set; }
     public string RouteDescription { get; set; }
     public ObservableCollection<Stop> Stops { get; set; }
     public bool IsLoading { get; set; }
+
+    public uint GetStopSequenceIndex(string tripID) { return StopSequenceIndex; }
 
     public void Flush()
     {
@@ -105,13 +112,13 @@ namespace FutarWP.Inlays
 
       if (entry.vehicle != null)
       {
-        if (MapElement == null)
+        if (VehicleIcon == null)
         {
-          MapElement = _mainPage.UpdateVehicleIconFromRecord(entry.vehicle);
+          VehicleIcon = _mainPage.UpdateVehicleIconFromRecord(entry.vehicle);
         }
         else
         {
-          _mainPage.Map.Center = MapElement.Location = new Geopoint(new BasicGeoposition()
+          _mainPage.Map.Center = VehicleIcon.Location = new Geopoint(new BasicGeoposition()
           {
             Latitude = entry.vehicle.location.lat,
             Longitude = entry.vehicle.location.lon,
@@ -132,6 +139,7 @@ namespace FutarWP.Inlays
           stop = new Stop(this)
           {
             ID = stopTime.stopId,
+            TripID = stopTime.tripId,
             Name = response.data.references.stops[stopTime.stopId].name,
             StopSequenceIndex = stopTime.stopSequence,
           };
@@ -170,12 +178,13 @@ namespace FutarWP.Inlays
 
     public class Stop : INotifyPropertyChanged
     {
-      private TripInlay _parent;
-      public Stop(TripInlay parent)
+      private ITripProvider _parent;
+      public Stop(ITripProvider parent)
       {
         _parent = parent;
       }
       public string ID { get; set; }
+      public string TripID { get; set; }
       public DateTime ArrivalTime { get; set; }
       public DateTime DepartureTime { get; set; }
       public string ArrivalTimeString => ArrivalTime.Year > 1 ? ArrivalTime.ToString("HH:mm") : string.Empty;
@@ -184,7 +193,7 @@ namespace FutarWP.Inlays
       public double Latitude { get; set; }
       public double Longitude { get; set; }
       public uint StopSequenceIndex { get; set; }
-      public bool IsPassed { get { return _parent == null ? false : _parent.StopSequenceIndex > StopSequenceIndex; } }
+      public bool IsPassed { get { return _parent == null ? false : _parent.GetStopSequenceIndex(TripID) > StopSequenceIndex; } }
 
       public void Update()
       {

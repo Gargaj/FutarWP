@@ -136,8 +136,8 @@ namespace FutarWP.Pages
       tripInlay.TripID = tripID;
       if (_vehicleIcons.ContainsKey(tripID))
       {
-        tripInlay.MapElement = _vehicleIcons[tripID];
-        map.Center = tripInlay.MapElement.Location;
+        tripInlay.VehicleIcon = _vehicleIcons[tripID];
+        map.Center = tripInlay.VehicleIcon.Location;
       }
 
       await tripInlay.Refresh();
@@ -173,7 +173,7 @@ namespace FutarWP.Pages
     {
       tripInlay.Flush();
       tripInlay.TripID = string.Empty;
-      tripInlay.MapElement = null;
+      tripInlay.VehicleIcon = null;
 
       stopInlay.Flush();
       stopInlay.StopID = string.Empty;
@@ -225,6 +225,12 @@ namespace FutarWP.Pages
       if (SelectedPane == Panes.Trip)
       {
         await tripInlay.Refresh();
+        return;
+      }
+
+      if (SelectedPane == Panes.PlanTripDetail)
+      {
+        await planTripDetailInlay.Refresh();
         return;
       }
 

@@ -11,11 +11,12 @@ using Windows.UI.Xaml.Controls.Maps;
 
 namespace FutarWP.Inlays
 {
-  public partial class PlanTripDetailInlay : UserControl, INotifyPropertyChanged
+  public partial class PlanTripDetailInlay : UserControl, INotifyPropertyChanged, ITripProvider
   {
     private App _app;
     private Pages.MainPage _mainPage;
     private List<MapElement> _routePaths;
+    private Dictionary<string, Trip> _trips = new Dictionary<string, Trip>();
 
     public PlanTripDetailInlay()
     {
@@ -27,6 +28,11 @@ namespace FutarWP.Inlays
 
       Legs = new ObservableCollection<LegBase>();
       _routePaths = new List<MapElement>();
+    }
+
+    public uint GetStopSequenceIndex(string tripID)
+    {
+      return !string.IsNullOrWhiteSpace(tripID) && _trips.ContainsKey(tripID) ? _trips[tripID].StopSequence : 0;
     }
 
     public ObservableCollection<LegBase> Legs { get; set; }
@@ -41,11 +47,50 @@ namespace FutarWP.Inlays
       Legs.Clear();
       OnPropertyChanged(nameof(Legs));
 
-      foreach(var path in _routePaths)
+      _trips.Clear();
+
+      foreach (var path in _routePaths)
       {
         _mainPage.Map.MapElements.Remove(path);
       }
       _routePaths.Clear();
+    }
+
+    public async Task Refresh()
+    {
+      foreach (var leg in Legs)
+      {
+        var routeLeg = leg as RouteLeg;
+        if (routeLeg == null)
+        {
+          continue;
+        }
+
+        var response = await _app.Client.GetAsync<API.Response<API.Commands.TripDetailsEntry>>(new API.Commands.TripDetails()
+        {
+          tripId = routeLeg.TripID,
+          date = DateTime.Now.ToString("yyyyMMdd")
+        });
+        var vehicle = response?.data?.entry?.vehicle;
+        if (vehicle != null)
+        {
+          _trips[routeLeg.TripID].StopSequence = vehicle.stopSequence;
+          if (_trips[routeLeg.TripID].VehicleIcon == null)
+          {
+            _trips[routeLeg.TripID].VehicleIcon = _mainPage.UpdateVehicleIconFromRecord(vehicle);
+          }
+          else
+          {
+            _trips[routeLeg.TripID].VehicleIcon.Location = new Geopoint(new BasicGeoposition()
+            {
+              Latitude = vehicle.location.lat,
+              Longitude = vehicle.location.lon,
+            });
+          }
+        }
+
+        routeLeg.Stops.ForEach(s => s.Update());
+      }
     }
 
     public async Task ShowItinerary(API.Commands.PlanTripEntry.Itinerary itinerary, API.Reference references)
@@ -114,6 +159,8 @@ namespace FutarWP.Inlays
           stops.AddRange(leg.intermediateStops);
           stops.Add(leg.to);
 
+          _trips.Add(leg.tripId, new Trip());
+
           Legs.Add(new RouteLeg()
           {
             DistanceInMeters = leg.distance,
@@ -123,12 +170,14 @@ namespace FutarWP.Inlays
             StartTime = API.Helpers.UnixTimeStampMillisecondsToDateTime(leg.startTime),
             EndTime = API.Helpers.UnixTimeStampMillisecondsToDateTime(leg.endTime),
 
+            TripID = leg.tripId,
             RouteBackColor = route.style.vehicleIcon.BackgroundColor,
             RouteForeColor = route.style.vehicleIcon.ForegroundColor,
             RouteShortName = route.shortName,
-            Stops = stops.Select(s => new TripInlay.Stop(null)
+            Stops = stops.Select(s => new TripInlay.Stop(this)
             {
               ID = s.stopId,
+              TripID = leg.tripId,
               Name = s.name,
               Latitude = s.lat,
               Longitude = s.lon,
@@ -189,6 +238,7 @@ namespace FutarWP.Inlays
 
     public class RouteLeg : LegBase
     {
+      public string TripID { get; set; }
       public string RouteBackColor { get; set; }
       public string RouteForeColor { get; set; }
       public string RouteShortName { get; set; }
@@ -197,6 +247,12 @@ namespace FutarWP.Inlays
 
     public class WalkLeg : LegBase
     {
+    }
+
+    public class Trip
+    {
+      public uint StopSequence { get; set; }
+      public MapIcon VehicleIcon { get; set; }
     }
   }
 }
