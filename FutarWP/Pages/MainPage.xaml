@@ -27,6 +27,7 @@
       <inlays:PlanTripDetailInlay x:Name="planTripDetailInlay"/>
     </Grid>
     <CommandBar Grid.Row="2" ClosedDisplayMode="Minimal">
+      <AppBarButton Icon="World" Label="{Binding CurrentBackendName}" ToolTipService.ToolTip="{Binding CurrentBackendName}" Click="ToggleBackend_Click"/>
       <AppBarButton Icon="MapPin" Label="Find me" ToolTipService.ToolTip="Find me" Click="FindMe_Click" IsEnabled="{Binding HasLocationServices}"/>
       <AppBarButton Icon="Directions" Label="Directions" ToolTipService.ToolTip="Directions" Click="Directions_Click"/>
       <AppBarButton Icon="Find" Label="Search" ToolTipService.ToolTip="Search" Click="Search_Click"/>

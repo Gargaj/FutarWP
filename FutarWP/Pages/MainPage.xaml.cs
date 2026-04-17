@@ -26,6 +26,9 @@ namespace FutarWP.Pages
     public static readonly int ZIdxVehicles = 30;
     public static readonly int ZIdxLocation = 40;
 
+    public static readonly string BackendFutar = "https://futar.bkk.hu/";
+    public static readonly string BackendUtas = "https://utas.hu/";
+
     private App _app;
     private MapIcon _locationIcon = new MapIcon() { Visible = false };
     private Geoposition _locationInfo;
@@ -55,6 +58,8 @@ namespace FutarWP.Pages
       _app = (App)Application.Current;
       DataContext = this;
 
+      _app.Client.RootURL = BackendFutar;
+
       _vehicleUpdate.Tick += _vehicleUpdate_Tick;
       _vehicleUpdate.PeriodicInterval = TimeSpan.FromSeconds(10);
       _stopUpdate.Tick += _stopUpdate_Tick;
@@ -74,6 +79,7 @@ namespace FutarWP.Pages
       map.ZoomLevelChanged += Map_ZoomLevelChanged;
     }
 
+    public string CurrentBackendName => _app.Client.RootURL == BackendFutar ? "Futár" : "utas.hu";
     public string MapHeight => SelectedPane == Panes.None ? "*" : "0.5*";
     public string PaneHeight => SelectedPane != Panes.None ? "0.5*" : "0";
     public Panes SelectedPane
@@ -189,6 +195,21 @@ namespace FutarWP.Pages
     private void Directions_Click(object sender, RoutedEventArgs e)
     {
       SelectPlanTrip();
+    }
+
+    private async void ToggleBackend_Click(object sender, RoutedEventArgs e)
+    {
+      if (_app.Client.RootURL == BackendFutar)
+      {
+        _app.Client.RootURL = BackendUtas;
+      }
+      else
+      {
+        _app.Client.RootURL = BackendFutar;
+      }
+      await _app.Client.ScrapeCredentials(_app.Client.RootURL);
+
+      OnPropertyChanged(nameof(CurrentBackendName));
     }
 
     private void FindMe_Click(object sender, RoutedEventArgs e)
@@ -424,7 +445,7 @@ namespace FutarWP.Pages
 
       try
       {
-        if (!await _app.Client.ScrapeCredentials())
+        if (!await _app.Client.ScrapeCredentials(_app.Client.RootURL))
         {
           var dialog = new ContentDialog
           {

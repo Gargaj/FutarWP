@@ -11,12 +11,9 @@ namespace FutarWP.API
 {
   public class Client
   {
-    private string _apiKey;
-    private string _appVersion;
     private readonly string _version = "4";
-    //private const string _rootURL = "https://futar.bkk.hu/";
-    private const string _rootURL = "https://utas.hu/";
 
+    private Dictionary<string, APICredentials> _apiCredentials = new Dictionary<string, APICredentials>();
     private Settings _settings = new Settings();
     private Newtonsoft.Json.JsonSerializerSettings _deserializerSettings = new Newtonsoft.Json.JsonSerializerSettings()
       {
@@ -29,10 +26,17 @@ namespace FutarWP.API
     {
     }
 
-    public async Task<bool> ScrapeCredentials()
+    public async Task<bool> ScrapeCredentials(string rootUrl)
     {
+      if (_apiCredentials.ContainsKey(rootUrl))
+      {
+        return true;
+      }
+
+      var credentials = new APICredentials();
+
       var http = new HTTP();
-      var pageData = await http.DoGETRequestAsync(_rootURL);
+      var pageData = await http.DoGETRequestAsync(rootUrl);
 
       var versionRegex = new System.Text.RegularExpressions.Regex(@"\/ride-gui\/(.*?)/");
       var match = versionRegex.Match(pageData);
@@ -40,7 +44,7 @@ namespace FutarWP.API
       {
         return false;
       }
-      _appVersion = match.Groups[1].Value.ToString();
+      credentials.AppVersion = match.Groups[1].Value.ToString();
 
       var configRegex = new System.Text.RegularExpressions.Regex(@"window\.APP_CONFIG = (.*?);window\.");
       match = configRegex.Match(pageData);
@@ -54,10 +58,14 @@ namespace FutarWP.API
       {
         return false;
       }
-      _apiKey = config.GetValue("API_KEY").ToString();
+      credentials.APIKey = config.GetValue("API_KEY").ToString();
+
+      _apiCredentials.Add(rootUrl, credentials);
 
       return true;
     }
+
+    public string RootURL { get; set; }
 
     public Settings Settings => _settings;
     public async Task<T> GetAsync<T>(CommandBase input)
@@ -74,7 +82,7 @@ namespace FutarWP.API
     {
       var http = new HTTP();
 
-      var url = $"{_rootURL}api{input.CommandURL}";
+      var url = $"{RootURL}api{input.CommandURL}";
       string responseJson = null;
       string bodyJson = string.Empty;
       var headers = new NameValueCollection();
@@ -86,9 +94,9 @@ namespace FutarWP.API
             var unixTimeMilliSeconds = dto.ToUnixTimeMilliseconds().ToString();
 
             var kvpArray = SerializeInput(input, input.ConcatenateStringArrays);
-            kvpArray.Add(new Tuple<string,string>("key", _apiKey));
+            kvpArray.Add(new Tuple<string,string>("key", _apiCredentials[RootURL].APIKey));
             kvpArray.Add(new Tuple<string,string>("version", _version));
-            kvpArray.Add(new Tuple<string,string>("appVersion", _appVersion));
+            kvpArray.Add(new Tuple<string,string>("appVersion", _apiCredentials[RootURL].AppVersion));
             kvpArray.Add(new Tuple<string,string>("_", unixTimeMilliSeconds.ToString()));
             url += (kvpArray.Count > 0 ? "?" : "") + string.Join("&", kvpArray.Select(s => $"{s.Item1}={WebUtility.UrlEncode(s.Item2)}"));
 
@@ -144,6 +152,12 @@ namespace FutarWP.API
         }
       }
       return queryString;
+    }
+
+    public class APICredentials
+    {
+      public string APIKey { get; set; }
+      public string AppVersion { get; set; }
     }
   }
 }
