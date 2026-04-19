@@ -211,8 +211,9 @@ namespace FutarWP.Inlays
       _mainPage.SelectPlanTrip();
     }
 
-    private void ClosePane_Click(object sender, RoutedEventArgs e)
+    private async void ClosePane_Click(object sender, RoutedEventArgs e)
     {
+      await _mainPage?.DeleteLoadLastPlanTripDetail();
       _mainPage?.ClosePane();
     }
 

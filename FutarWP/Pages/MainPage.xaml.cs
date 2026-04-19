@@ -28,6 +28,7 @@ namespace FutarWP.Pages
 
     public static readonly string BackendFutar = "https://futar.bkk.hu/";
     public static readonly string BackendUtas = "https://utas.hu/";
+    public static readonly string SavedPlanTripFilename = "savedPlanTrip.json";
 
     private App _app;
     private MapIcon _locationIcon = new MapIcon() { Visible = false };
@@ -169,8 +170,57 @@ namespace FutarWP.Pages
       SelectedPane = Panes.PlanTrip;
     }
 
+    public async Task DeleteLoadLastPlanTripDetail()
+    {
+      try
+      {
+        var localFolder = Windows.Storage.ApplicationData.Current.LocalFolder;
+        var file = await localFolder.GetFileAsync(SavedPlanTripFilename);
+        await file.DeleteAsync(Windows.Storage.StorageDeleteOption.PermanentDelete);
+      }
+      catch (Exception)
+      {
+      }
+    }
+
+    public async Task<bool> TryLoadLastPlanTripDetail()
+    {
+      try
+      {
+        var localFolder = Windows.Storage.ApplicationData.Current.LocalFolder;
+
+        var file = await localFolder.GetFileAsync(SavedPlanTripFilename);
+        var buff = await Windows.Storage.FileIO.ReadBufferAsync(file);
+        var str = Windows.Security.Cryptography.CryptographicBuffer.ConvertBinaryToString(Windows.Security.Cryptography.BinaryStringEncoding.Utf8, buff);
+
+        var json = Newtonsoft.Json.JsonConvert.DeserializeObject(str) as Newtonsoft.Json.Linq.JObject;
+
+        var itinerary = json.GetValue("itinerary").ToObject<API.Commands.PlanTripEntry.Itinerary>();
+        var references = json.GetValue("references").ToObject<API.Reference>();
+
+        SelectedPane = Panes.PlanTripDetail;
+        await planTripDetailInlay.ShowItinerary(itinerary, references);
+
+        return true;
+      }
+      catch (Exception)
+      {
+        return false;
+      }
+    }
+
     public async Task SelectPlanTripDetail(API.Commands.PlanTripEntry.Itinerary itinerary, API.Reference references)
     {
+      var json = new Newtonsoft.Json.Linq.JObject();
+      json.Add("itinerary", Newtonsoft.Json.Linq.JObject.FromObject(itinerary));
+      json.Add("references", Newtonsoft.Json.Linq.JObject.FromObject(references));
+      var str = Newtonsoft.Json.JsonConvert.SerializeObject(json);
+      
+      var localFolder = Windows.Storage.ApplicationData.Current.LocalFolder;
+      var file = await localFolder.CreateFileAsync(SavedPlanTripFilename, Windows.Storage.CreationCollisionOption.ReplaceExisting);
+      var buff = Windows.Security.Cryptography.CryptographicBuffer.ConvertStringToBinary(str, Windows.Security.Cryptography.BinaryStringEncoding.Utf8);
+      await Windows.Storage.FileIO.WriteBufferAsync(file, buff);
+
       SelectedPane = Panes.PlanTripDetail;
       await planTripDetailInlay.ShowItinerary(itinerary, references);
     }
@@ -489,6 +539,8 @@ namespace FutarWP.Pages
           map.MapElements.Add(_locationIcon);
         }
       });
+
+      await TryLoadLastPlanTripDetail();
     }
 
     protected async Task FindMapCenterFromMetadata()
